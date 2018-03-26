@@ -9,7 +9,7 @@ theme = "hugo-tanka"
 enableEmoji = true
 
 googleAnalytics = ""
-disqusShortname = "xinchen_pan"
+disqusShortname = "spsufawi"
 disable_mathjax = false
 
 pygmentsstyle      = "vs"
