@@ -1,0 +1,11 @@
+---
+title: 用R分析三国志系列武将数据
+author: Xinchen Pan
+date: '2018-03-25'
+slug: RoTC-Analysis
+categories:
+  - Data Analysis
+tags:
+  - R
+---
+
