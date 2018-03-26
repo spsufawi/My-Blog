@@ -9,7 +9,7 @@ theme = "hugo-tanka"
 enableEmoji = true
 
 googleAnalytics = ""
-disqusShortname = "spsufawi"
+disqusShortname = "https-spsufawi-netlify-com"
 disable_mathjax = false
 
 pygmentsstyle      = "vs"
