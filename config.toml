@@ -1,13 +1,15 @@
 baseurl = "https://spsufawi.netlify.com/"
 publishDir = "docs"
-title = "Hugo Tanka Theme"
-author = "Nan Xiao"
+title = "Xinchen's Blog"
+author = "Xinchen Pan"
 canonifyurls = true
 languagecode = "en"
 theme = "hugo-tanka"
 
+enableEmoji = true
+
 googleAnalytics = ""
-disqusShortname = ""
+disqusShortname = "xinchen_pan"
 disable_mathjax = false
 
 pygmentsstyle      = "vs"
