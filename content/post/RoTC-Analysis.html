@@ -108,16 +108,16 @@ nrow(show_in_all)</code></pre>
 <pre><code>## # A tibble: 10 x 1
 ##    姓名  
 ##    &lt;chr&gt; 
-##  1 劉禪  
-##  2 雍闓  
-##  3 劉循  
-##  4 孫桓  
-##  5 司馬懿
-##  6 辛毗  
-##  7 呂蒙  
-##  8 夏侯德
-##  9 司馬昭
-## 10 荀彧</code></pre>
+##  1 韓當  
+##  2 郭淮  
+##  3 董卓  
+##  4 劉琦  
+##  5 李儒  
+##  6 張昭  
+##  7 夏侯楙
+##  8 田豐  
+##  9 侯成  
+## 10 王朗</code></pre>
 <p>那有哪些角色出现在了第一部，却在后边某些版本没出现呢。</p>
 <pre class="r"><code>show_in_all &lt;- Reduce(intersect, lapply(series, &quot;[&quot;, 1))
 setdiff(filter(series_full, 版本 == &quot;三國志1&quot;)$姓名, show_in_all$姓名)</code></pre>
@@ -158,5 +158,22 @@ setdiff(filter(series_full, 版本 == &quot;三國志1&quot;)$姓名, show_in_al
 <p><img src="/post/RoTC-Analysis_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
 <p>刘备和孙权的统率最终又交汇到了75左右。統率指的是带兵打仗能力，刘备一生虽然败仗打得多，但汉中之战也算是个人巅峰，孙权统治江东五十余年，一直没在曹魏的淮南地区占得便宜，虽说镇守合肥的历来都是曹魏的名将，但也稍微说明了点孙权的打仗能力。</p>
 </div>
+</div>
+<div class="section level3">
+<h3>2.3 历代最强武力</h3>
+<pre class="r"><code>top_attr &lt;- function(attrs, desc = TRUE){
+  top_low_data &lt;- lapply(1:11, function(x){filter(final, 版本 == paste0(&quot;三國志&quot;, x)) %&gt;%
+  select(c(&quot;姓名&quot;, attrs)) %&gt;%
+  filter(eval(parse(text = attrs)) %in% sort(eval(parse(text = attrs)), 
+        decreasing = desc)[1:10])}) %&gt;%
+  rbindlist()
+  
+  top_low_times &lt;- top_low_data %&gt;%
+    group_by(姓名) %&gt;% 
+    summarise(次數 = n(), 均值 = ceiling(mean(eval(parse(text = attrs)), na.rm = TRUE))) %&gt;% 
+    arrange(desc(次數)) %&gt;%
+    slice(1:10)
+  return(list(top_low_data, top_low_times))
+}</code></pre>
 </div>
 </div>

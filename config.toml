@@ -26,7 +26,7 @@ ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
 
 [[menu.main]]
     name = "Home"
-    url = "https://spsufawi.netlify.com"
+    url = "/"
     weight = 1
 [[menu.main]]
     name = "GitHub"
@@ -36,3 +36,6 @@ ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
     name = "LinkedIn"
     url = "https://www.linkedin.com/in/xinchenpan"
     weight = 3
+[[menu.main]]
+    name = "About"
+    url = "/about-me"

@@ -195,6 +195,25 @@ emperor_attr_led("統率")
 
 刘备和孙权的统率最终又交汇到了75左右。統率指的是带兵打仗能力，刘备一生虽然败仗打得多，但汉中之战也算是个人巅峰，孙权统治江东五十余年，一直没在曹魏的淮南地区占得便宜，虽说镇守合肥的历来都是曹魏的名将，但也稍微说明了点孙权的打仗能力。
 
+###2.3 历代最强武力
+
+```{r}
+top_attr <- function(attrs, desc = TRUE){
+  top_low_data <- lapply(1:11, function(x){filter(final, 版本 == paste0("三國志", x)) %>%
+  select(c("姓名", attrs)) %>%
+  filter(eval(parse(text = attrs)) %in% sort(eval(parse(text = attrs)), 
+        decreasing = desc)[1:10])}) %>%
+  rbindlist()
+  
+  top_low_times <- top_low_data %>%
+    group_by(姓名) %>% 
+    summarise(次數 = n(), 均值 = ceiling(mean(eval(parse(text = attrs)), na.rm = TRUE))) %>% 
+    arrange(desc(次數)) %>%
+    slice(1:10)
+  return(list(top_low_data, top_low_times))
+}
+```
+
 
 
 
