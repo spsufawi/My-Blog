@@ -20,13 +20,14 @@
     {{ end }}
   </title>
   <link rel="canonical" href="{{ .Permalink }}">
-
+  <link href="//cdn.bootcss.com/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
   <link rel="stylesheet" href="{{ "/css/fonts.css" | relURL }}" />
   <link rel="stylesheet" href="{{ "/css/style.css" | relURL }}" />
 
   {{ if .RSSLink }}
   <link href="{{ .RSSLink }}" rel="alternate" type="application/rss+xml" title="{{ .Site.Title }}" />
   {{ end }}
+  
 </head>
 
 <body>
@@ -38,3 +39,5 @@
     {{ end }}
   </ul>
 </section>
+
+
