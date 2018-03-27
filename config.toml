@@ -33,9 +33,5 @@ ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
     url = "https://github.com/spsufawi"
     weight = 2
 [[menu.main]]
-    name = "LinkedIn"
-    url = "https://www.linkedin.com/in/xinchenpan"
-    weight = 3
-[[menu.main]]
     name = "About"
     url = "/about-me"
