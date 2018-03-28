@@ -1,4 +1,4 @@
-baseurl = "https://spsufawi.netlify.com/"
+baseurl = "https://spsufawi.rbind.io/"
 publishDir = "docs"
 title = "Xinchen's Blog"
 author = "Xinchen Pan"
