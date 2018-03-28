@@ -108,16 +108,16 @@ nrow(show_in_all)</code></pre>
 <pre><code>## # A tibble: 10 x 1
 ##    姓名  
 ##    &lt;chr&gt; 
-##  1 韓當  
-##  2 郭淮  
-##  3 董卓  
-##  4 劉琦  
-##  5 李儒  
-##  6 張昭  
-##  7 夏侯楙
-##  8 田豐  
-##  9 侯成  
-## 10 王朗</code></pre>
+##  1 顧雍  
+##  2 楊懷  
+##  3 紀靈  
+##  4 姜維  
+##  5 徐榮  
+##  6 華雄  
+##  7 夏侯淵
+##  8 張遼  
+##  9 劉封  
+## 10 呂蒙</code></pre>
 <p>那有哪些角色出现在了第一部，却在后边某些版本没出现呢。</p>
 <pre class="r"><code>show_in_all &lt;- Reduce(intersect, lapply(series, &quot;[&quot;, 1))
 setdiff(filter(series_full, 版本 == &quot;三國志1&quot;)$姓名, show_in_all$姓名)</code></pre>
@@ -160,20 +160,209 @@ setdiff(filter(series_full, 版本 == &quot;三國志1&quot;)$姓名, show_in_al
 </div>
 </div>
 <div class="section level3">
-<h3>2.3 历代最强武力</h3>
-<pre class="r"><code>top_attr &lt;- function(attrs, desc = TRUE){
-  top_low_data &lt;- lapply(1:11, function(x){filter(final, 版本 == paste0(&quot;三國志&quot;, x)) %&gt;%
-  select(c(&quot;姓名&quot;, attrs)) %&gt;%
-  filter(eval(parse(text = attrs)) %in% sort(eval(parse(text = attrs)), 
-        decreasing = desc)[1:10])}) %&gt;%
-  rbindlist()
-  
-  top_low_times &lt;- top_low_data %&gt;%
-    group_by(姓名) %&gt;% 
-    summarise(次數 = n(), 均值 = ceiling(mean(eval(parse(text = attrs)), na.rm = TRUE))) %&gt;% 
-    arrange(desc(次數)) %&gt;%
+<h3>2.3 历代最强/最弱</h3>
+<div class="section level4">
+<h4>2.3.1 历代最强武力</h4>
+<p>下面这个function是用来算历代游戏中各人物进入最强武力，最强智力，最弱武力等等top10的次数。</p>
+<pre class="r"><code>top_low_attr &lt;- function(attrs, bw = 1){
+  col_name &lt;- enquo(attrs) 
+  result &lt;- series_full %&gt;% group_by(版本) %&gt;% 
+    top_n(n = bw * 10, !!col_name) %&gt;% 
+    group_by(姓名) %&gt;%
+    summarise(次數 = n(), 均值 = ceiling(mean(!!col_name))) %&gt;%
+    arrange(desc(次數), desc(均值)) %&gt;%
     slice(1:10)
-  return(list(top_low_data, top_low_times))
+    result
 }</code></pre>
+<p>这跨越了21年的11代游戏里，武力最强者是否有很大变化。从下边这个表格来看，吕布，关羽，张飞，马超，许褚这五个人每一次都进入了最强武力top 10。其它四人也都没有悬念，但太史慈5次进入top这让我有点意外。太史慈出道作品是北海救孔融，成名之作是和孙策的单挑，加入东吴后成功镇压刘磐，总体说来还是十分勇武的，放在游戏中武力必然90保底，没想到光荣给过多次95以上。</p>
+<p>注：这武力均值是该角色进入前10的时候的武力值的平均数</p>
+<pre class="r"><code>top_low_attr(武力)</code></pre>
+<pre><code>## # A tibble: 10 x 3
+##    姓名    次數  均值
+##    &lt;chr&gt;  &lt;int&gt; &lt;dbl&gt;
+##  1 呂布      11  100.
+##  2 張飛      11   99.
+##  3 關羽      11   98.
+##  4 馬超      11   98.
+##  5 許褚      11   97.
+##  6 趙雲      10   98.
+##  7 典韋       9   96.
+##  8 黃忠       6   96.
+##  9 文醜       6   96.
+## 10 太史慈     5   96.</code></pre>
+</div>
+<div class="section level4">
+<h4>2.3.2 历代最高智力</h4>
+<p>把左慈这个神棍去掉的话就有失悬念了，唯一意外的是诸葛亮有一次没进前十，有可能是我的代码没考虑第十名并列的情况，不过诸葛亮智力怎么会排到第十？</p>
+<pre class="r"><code>top_low_attr(智力)</code></pre>
+<pre><code>## # A tibble: 10 x 3
+##    姓名    次數  均值
+##    &lt;chr&gt;  &lt;int&gt; &lt;dbl&gt;
+##  1 龐統      11   98.
+##  2 司馬懿    11   98.
+##  3 荀彧      11   97.
+##  4 周瑜      11   97.
+##  5 諸葛亮    10  100.
+##  6 郭嘉      10   98.
+##  7 陸遜      10   96.
+##  8 賈詡       9   96.
+##  9 徐庶       9   96.
+## 10 左慈       4   99.</code></pre>
+<p>那我们来看下是哪一代诸葛亮掉队了。原來是第七部，这部游戏的人物数值设计师看来是个诸葛亮黑，或者他把诸葛亮其他能力调高了？</p>
+<pre class="r"><code>series_full %&gt;% filter(姓名 == &quot;諸葛亮&quot;)  %&gt;%
+  select(&quot;智力&quot;, &quot;版本&quot;)</code></pre>
+<pre><code>##    智力     版本
+## 1   100  三國志1
+## 2   100  三國志2
+## 3   100  三國志3
+## 4   100  三國志4
+## 5   100  三國志5
+## 6   100  三國志6
+## 7    92  三國志7
+## 8   100  三國志8
+## 9   100  三國志9
+## 10  100 三國志10
+## 11  100 三國志11</code></pre>
+<p>嚯，原来如此，在历代诸葛亮武力都在5，60，甚至3,40的情况下，第七部诸葛亮一跃成为了一名武力为87的武将，有理想相信这是光荣为了平衡而nerf的决定。</p>
+<pre class="r"><code>series_full %&gt;% filter(姓名 == &quot;諸葛亮&quot;) </code></pre>
+<pre><code>##      姓名 統率 武力 智力 魅力 運勢     版本 政治 陸指 水指 體力
+## 1  諸葛亮   NA   72  100   97   84  三國志1   NA   NA   NA   69
+## 2  諸葛亮   NA   65  100   98   NA  三國志2   NA   NA   NA   NA
+## 3  諸葛亮   NA   61  100   95   NA  三國志3   92   92   78   NA
+## 4  諸葛亮   97   55  100   96   NA  三國志4   96   NA   NA   NA
+## 5  諸葛亮   NA   60  100   97   NA  三國志5   96   NA   NA   NA
+## 6  諸葛亮   97   55  100   98   NA  三國志6   98   NA   NA   NA
+## 7  諸葛亮   NA   87   92   95   NA  三國志7   98   NA   NA   NA
+## 8  諸葛亮   NA   50  100   91   NA  三國志8   98   NA   NA   NA
+## 9  諸葛亮   92   33  100   NA   NA  三國志9   98   NA   NA   NA
+## 10 諸葛亮   93   37  100   92   NA 三國志10   98   NA   NA   NA
+## 11 諸葛亮   92   38  100   92   NA 三國志11   95   NA   NA   NA</code></pre>
+</div>
+<div class="section level4">
+<h4>2.3.3 历代最弱智力</h4>
+<p>提到兀突骨可能有人不认识，但估计都知道诸葛亮七擒孟获，孟获被抓了六次之后第七次找的藤甲兵援军的老大就是他。(我一直把他和沙摩柯搞混了)。兀酱是三国演义虚构的角色，虽然自己的三万人中了诸葛亮的火攻全军覆没，也不至于智力在11作游戏中九次排倒数吧，为兀突骨鸣不平。</p>
+<p>这表格中少数部落的人占了50%，兀突骨，忙牙长，金环三结，孟优都是南蛮人，拥有三国演义最喜感名字的俄何燒戈是羌族武将（迷当大王不服）。演义中基本南蛮羌人作为援军出场的下场都不太好。刘备伐吴请来的沙摩柯被周泰所杀，雅丹和越吉一个被活捉一个被杀，接着就是俄何烧戈了（历史上俄何和烧戈是两个人）。</p>
+<pre class="r"><code>top_low_attr(智力, -1)</code></pre>
+<pre><code>## # A tibble: 10 x 3
+##    姓名      次數  均值
+##    &lt;chr&gt;    &lt;int&gt; &lt;dbl&gt;
+##  1 兀突骨       9    9.
+##  2 俄何燒戈     7   13.
+##  3 潘鳳         7   12.
+##  4 忙牙長       7   10.
+##  5 楊秋         5   16.
+##  6 金環三結     5   15.
+##  7 蔡和         5    9.
+##  8 王雙         4   16.
+##  9 曹豹         4   14.
+## 10 孟優         3   12.</code></pre>
+<p>其它人物没太多可说的。蔡和，被曹操喊去卧底，估计一身演技还没施展，就被周瑜识破了。 上将潘凤打不过华雄为啥智力那么低，何况也是韩馥让他去的，他的大斧饥渴难耐那是电视剧给他加的台词。都怪罗贯中。</p>
+<pre>
+<code>
+“末将遵命！取兵器来！” 央视版三国
+“小小娃娃口出狂言，我乃潘凤，快来送死！” 《貂蝉》
+“华雄的拳在真正天才的眼里，不过是慢动作而已。” 《终极三国》
+“有何不敢？我的大斧早就饥渴难耐了！” 《三国》
+</code>
+</pre>
+</div>
+<div class="section level4">
+<h4>2.3.4 历代最差魅力</h4>
+<p>宦官黄皓，佞臣岑昏入围比较没悬念，演义中被描述成”平生性急，轻于杀戮，众皆恶之“的韩玄，卖了张鲁协助曹军最后却身首异处的杨松，投降东吴的糜芳都比较合理。</p>
+<pre class="r"><code>top_low_attr(魅力, -1)</code></pre>
+<pre><code>## # A tibble: 10 x 3
+##    姓名    次數  均值
+##    &lt;chr&gt;  &lt;int&gt; &lt;dbl&gt;
+##  1 黃皓       8   12.
+##  2 岑昏       7   12.
+##  3 韓玄       7   11.
+##  4 忙牙長     5   16.
+##  5 曹豹       5   15.
+##  6 雷薄       5   15.
+##  7 嚴政       5   13.
+##  8 何晏       4   10.
+##  9 楊松       4    8.
+## 10 糜芳       3   14.</code></pre>
+</div>
+</div>
+<div class="section level3">
+<h3>2.4 智勇双全</h3>
+<div class="section level4">
+<h4>2.4.1 有勇有谋</h4>
+<p>下面来看下在武力比智力高的人里智力最高的是谁</p>
+<pre class="r"><code>war_int &lt;- series_full %&gt;% filter(武力 &gt; 智力) %&gt;% 
+  group_by(版本) %&gt;%
+  top_n(n = 1, 智力) %&gt;%
+  select(c(&quot;姓名&quot;, &quot;武力&quot;, &quot;智力&quot;))</code></pre>
+<pre><code>## Adding missing grouping variables: `版本`</code></pre>
+<pre class="r"><code>table(war_int$姓名)</code></pre>
+<pre><code>## 
+## 曹操 郝昭 李嚴 孫策 徐盛 張遼 張任 趙雲 
+##    1    1    1    3    2    4    1    3</code></pre>
+<p>孙策，赵云<span class="math inline">\(\times 3\)</span>，张辽<span class="math inline">\(\times 4\)</span>, 徐盛，张任, 郝昭，这些确实都是三国里最厉害的一群人物。</p>
+</div>
+<div class="section level4">
+<h4>2.4.2 文武双全</h4>
+<p>智力比武力高的人里武力最高的会有谁。</p>
+<pre class="r"><code>int_war &lt;- series_full %&gt;% filter(智力 &gt;= 武力) %&gt;% 
+  group_by(版本) %&gt;%
+  top_n(n = 1, 武力) %&gt;%
+  select(c(&quot;姓名&quot;, &quot;武力&quot;, &quot;智力&quot;))</code></pre>
+<pre><code>## Adding missing grouping variables: `版本`</code></pre>
+<pre class="r"><code>table(int_war$姓名)</code></pre>
+<pre><code>## 
+## 曹操 姜維 孫權 
+##    2    9    1</code></pre>
+<p>基本都是姜伯约，不过光荣公司把姜维的武力智力调换下相信也不会有人有意见。</p>
+<p>再来看下武力+智力最高的人是谁，是否和上边的人物有所出入</p>
+<pre class="r"><code>war_int2 &lt;- series_full %&gt;%  mutate(智勇 = 智力 + 武力) %&gt;%
+  group_by(版本) %&gt;%
+  top_n(n = 1, 智勇)
+table(war_int2$姓名) </code></pre>
+<pre><code>## 
+## 曹操 姜維 趙雲 周瑜 
+##    2    7    2    1</code></pre>
+<p>基本没区别。</p>
+</div>
+</div>
+<div id="-vs-" class="section level3">
+<h3>2.5 五虎大将 vs 五子良将</h3>
+<p>最后来对比下蜀国五虎大将和五子良将吧。先来放一张光荣风格的武将头像图。</p>
+<img src="/content/post/RoTC-Analysis_files/wuhua-vs-wuzi.jpg" /> 五子良将指的是魏国将领张辽，徐晃，乐进，张郃，于禁。这个称号来自陈寿的《三国志》
+<pre>
+<code>
+太祖建茲武功，而時之良將，五子為先 --陈寿 《三国志魏志卷十七》
+</code>
+</pre>
+<p>正史上并没有记载有五虎将这个称号，陈寿将关羽，张飞，赵云，黄忠，马超合编到了《三国志·蜀书·关张马黄赵传》中，后来人们就以此构想出了五虎上将，可能也是受到了五子良将的启发。</p>
+<div id="-1" class="section level4">
+<h4>2.5.1 武力对比</h4>
+<pre class="r"><code>wuzi &lt;- c(&quot;張郃&quot;, &quot;徐晃&quot;, &quot;張遼&quot;, &quot;于禁&quot;, &quot;樂進&quot;)
+wuhu &lt;- c(&quot;關羽&quot;, &quot;張飛&quot;, &quot;趙雲&quot;, &quot;馬超&quot;, &quot;黃忠&quot;)
+
+general &lt;- series_full %&gt;% filter(姓名 %in% c(wuzi, wuhu)) %&gt;% 
+  mutate(稱呼 = ifelse(姓名 %in% wuzi, &quot;五子良將&quot;, &quot;五虎大將&quot;))
+
+wuhu_vs_wuzi &lt;- function(attrs){
+  ggplot(general, aes_string(x = &quot;版本&quot;, y = attrs, group = &quot;姓名&quot;)) + 
+    geom_point(size = 2, aes(color = 稱呼)) + 
+    geom_line(aes(color = 稱呼)) +
+    geom_text(data = filter(general, 版本 == &quot;三國志1&quot;), 
+      aes(label = 姓名, hjust = 1, vjust = -1)) +
+    ggtitle(paste0(&quot;五子良將和五虎大將歷代&quot;, attrs, &quot;對比&quot;))
+}</code></pre>
+<pre class="r"><code>wuhu_vs_wuzi(&quot;武力&quot;)</code></pre>
+<p><img src="/post/RoTC-Analysis_files/figure-html/unnamed-chunk-28-1.png" width="672" /></p>
+<p>从这个图来看基本五虎武力是碾压五子的，而五子里又属张辽徐晃武力最高。前者没有什么好说的，毕竟关羽赵飞的“万人敌”的称号是《三国志魏书程昱传》里记载的。赵云先不说在历史上真实的表现如何，就凭他在演义里长坂坡，汉水拒敌的表现，光荣就不敢不给赵云95以下的武力。五虎将的武力基本没什么变化，维持在95左右。乐进和于禁的武力在2代一度跌破60，后边走高达到了80多。</p>
+张辽前边已经说过不少，我们来看下曹丕，孙权对他的评价。
+<pre>
+<code>
+曹丕：「此亦古之召虎也。」「合肥之役，遼、（李）典以步卒八百，破賊十萬，自古用兵，未之有也。
+      使賊至今奪氣，可謂國之爪牙矣。其分遼、典邑各百戶，賜一子爵關內侯。」
+孫權：「張遼雖病，不可當也，慎之！
+</code>
+</pre>
+<p>徐晃主要的战绩是潼关之战和樊城之战， 潼关之战率军先渡黄河为曹军主力部队铺路，击败梁兴。</p>
+</div>
 </div>
 </div>
