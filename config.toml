@@ -18,7 +18,7 @@ pygmentscodefences = true
 ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
 
 [params]
-  sitename = "R · Data Scince · sample(thoughts, 1)"
+  sitename = "R · Data Scince · sample(thoughts, ?)"
   highlightjsVersion = "9.11.0"
   highlightjsCDN = "//cdn.bootcss.com"
   highlightjsLang = ["r", "yaml"]
