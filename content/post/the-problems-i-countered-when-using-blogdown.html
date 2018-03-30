@@ -1,0 +1,51 @@
+---
+title: The problems I countered when using blogdown
+author: Xinchen Pan
+date: '2018-03-29'
+slug: the-problems-i-countered-when-using-blogdown
+categories:
+  - Thoughts
+tags:
+  - Blogdown
+---
+
+
+
+<p>I opened two blogs and wrote hundreds of posts in the past. Most of them are very personal stuff that I do not want to share, neither people are interested. I started thinking to write something nontrival recently to share my findings of R, machine learning or data science topics with more people.</p>
+<p>As a reader of <a href="https://yihui.name/">Yihui’s blog</a> for long time, I knew very early about his blogdown project. I am sure I will not be disappointed with it so I decided not to use wordpress but blogdown.</p>
+<p>There is an old Chinese saying, “磨刀不误砍柴工” which means that sharpening your axes will not make you delay the job of cutting wood. The time I wasted for not reading the blogdown book carefully perfectly proves it.</p>
+<p>After I finished reading the first chapter roughly, I recalled about the tutorial Yihui recommended and decided to use <a href="https://notes.peter-baumgartner.net/tutorial/blogdown-tutorial-part-1/">that tutorial</a>. It is a step by step with screen shot kind of tutorial which I believe people generally like since it is just much simpler compared to the offical documentations(I think Yihui already made effort to make the book easier to read for most readers.)</p>
+<p>I chose the <a href="https://github.com/road2stat/hugo-tanka">Hugo-Tanka</a> as theme because this time I want to focus on content of the blog instead of the appearance.</p>
+<p>Very soon, I got first problem after creating a new post <img src="/post/the-problems-i-countered-when-using-blogdown_files/error1.png" /></p>
+<p>It is self-explanatory so without spending too much time, I solved it by adding the folder <code>archetypes</code> in <code>themes/hugo-tanka/</code>. However, I did not find this folder in the author’s github who used the same theme for his blog. And I have no idea what <code>archetypes</code> does. I have years of Rmarkdown experience but I basically know nothing about web development language. From Yihui’s blogdown book,</p>
+<blockquote>
+The file archetypes/default.md defines the default template based on which users can create new posts. In this theme, default.md only provided empty YAML metadata
+</blockquote>
+<p>Does it mean it is used for setting the default YAML metadata information for different author who are authorized to create posts? I am not sure, ok. Anyway, let’s keep it for now.</p>
+<p>If this problem is not caused by just going over the documentation book to fast, next problem is.</p>
+<div class="figure">
+<img src="/post/the-problems-i-countered-when-using-blogdown_files/error2.png" />
+
+</div>
+<p>I asked myself where is the <code>public</code> folder. I remember it showed up immediately when I created post in the default theme. Ok, google it. Unfortunately, I did not find any of the questions that can solve the problem and I now know the reason of it. I compared the author’s github repository and could not find it either. What to do next? Is it becasue I did not put the <code>default.md</code> in <code>archetypes</code> folder? I tried and served the site again. No magic. How about not pushing this folder to Github? It definitely failed to deploy in netlify since I chose the publishing directory to be <code>public</code>.</p>
+<p>Then I thought do I really know what <code>public</code> does? I went back to the book and searched again. I saw this “<strong>When you click this button, RStudio will call blogdown::build_site() to build the website. This will automatically generate files in the <code>public/</code> directory</strong>”. The comments at the bottom explained “<strong>Or wherever your publishing directory is located. It is public/ by default, but it can be changed by specifying the publishDir = “myNewDirectory” in the config.toml file</strong>”.</p>
+<p>The <code>public/</code> directory was renamed to <code>docs/</code> by the author.</p>
+<p>After solving this problem, I have no problem in publishing posts.</p>
+<p>The next day, another idea came out. I wanted to highlight the syntax! I googled it and I think the first few results will be Yihui’s blogdown books anyway. It turned out to be Amber Thomas’s <a href="https://amber.rbind.io/blog/2017/11/15/syntax-highlighting/">tutorial</a>. In step one, she wrote: “<strong>As it so happens, some Hugo themes already have highlight.js functionality built in. For instance, if you use the default theme within blogdown, you’re all set.</strong>” I checked my Hugo/tanka theme and did not find the following code</p>
+<pre>
+[params]
+    highlightjsVersion = "9.11.0"
+    highlightjsCDN = "//cdn.bootcss.com"
+    highlightjsLang = ["r", "yaml"]
+    highlightjsTheme = "github"
+</pre>
+<p>She then wrote “<strong>If, like me, your theme does not allow for highlighting out-of-the-box, keep reading.</strong>” I completed skipped this sentence and without testing whether my theme supports it or not, I followed her.</p>
+<p>I got stuck at step three. After a few hours of trying, I gave up.</p>
+<p>Another day, I decided to try again. I searched <strong>highlight</strong> in the book and found the relevant information at chapter 2.5.2. I just followed it and my code is highlighted successfylly.</p>
+<p>The last problem I encountered was about adding new page. This time I really read the book very carefully. Yihui said adding page is essentially the same as adding new post. My problem is that the new page not only showed in the menu but also showed in the posts. I do not want it in the posts so I searched the way to hide it. Then I found <code> {{ range (where .Data.Pages “Section” “!=” “”) }} </code> I replaced the original code in <code>index.html</code> with this. I am not sure if it will cause any problems as it a bad practice. Since no problems for now, I did bother to worry.</p>
+<p>There is one problem I could not solve. I want to hide the author, date information for the page <code>About</code>. But I want to keep it for the posts. I think I knew where to change the code but it is a waste of time if I just randomly changed the code. Give up.</p>
+<blockquote>
+<p>欲速则不达 –《论语·子路》</p>
+</blockquote>
+<p>Not using the default theme as Yihui suggested is not the key problem. I am just too impatient, impetuous and restless.</p>
+<p>Learn from the experience. Foucs on the content of the posts.</p>

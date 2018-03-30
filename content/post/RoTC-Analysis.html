@@ -108,16 +108,16 @@ nrow(show_in_all)</code></pre>
 <pre><code>## # A tibble: 10 x 1
 ##    姓名 
 ##    &lt;chr&gt;
-##  1 劉循 
-##  2 高定 
-##  3 黃蓋 
-##  4 張飛 
-##  5 周倉 
-##  6 韓遂 
-##  7 楊儀 
-##  8 孫乾 
-##  9 李典 
-## 10 蔡中</code></pre>
+##  1 文聘 
+##  2 張松 
+##  3 王粲 
+##  4 張橫 
+##  5 張允 
+##  6 吳蘭 
+##  7 徐榮 
+##  8 潘璋 
+##  9 朱治 
+## 10 劉焉</code></pre>
 <p>那有哪些角色出现在了第一部，却在后边某些版本没出现呢。</p>
 <pre class="r"><code>show_in_all &lt;- Reduce(intersect, lapply(series, &quot;[&quot;, 1))
 setdiff(filter(series_full, 版本 == &quot;三國志1&quot;)$姓名, show_in_all$姓名)</code></pre>
@@ -131,7 +131,7 @@ setdiff(filter(series_full, 版本 == &quot;三國志1&quot;)$姓名, show_in_al
 <div class="section level3">
 <h3>2.2. 三国主君数值对比</h3>
 <div class="section level4">
-<h4>武力对比</h4>
+<h4>2.2.1 武力对比</h4>
 <p><img src="/post/RoTC-Analysis_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
 <p>《三国志1》作为一款1985年出品的游戏，可能在人物数值上稍欠考究，在这一代中，孙权和曹操的武力达到了惊人的94，93。之后几乎是一直下降到70上下，基本是个准二流武力的水平。</p>
 从资料来看，曹操的武力高于一般士兵是没问题的。
@@ -151,7 +151,7 @@ setdiff(filter(series_full, 版本 == &quot;三國志1&quot;)$姓名, show_in_al
 <p>所以孙曹刘武力都最终稳定在70上下，我认为比较科学。</p>
 </div>
 <div class="section level4">
-<h4>智力对比</h4>
+<h4>2.2.2 智力对比</h4>
 <p><img src="/post/RoTC-Analysis_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
 <p>从图中可以看到除了曹操每一代智力都稳定在90以上，孙权和刘备的智力都呈下降趋势，分别稳定在80和70左右，这还是比较合理的，一来是刘备在整部《三国演义》里都没有什么出彩的料敌制胜，智谋过人的表现，在诸葛亮出山以前长期依附着不同势力，从曹操，到袁绍，再到刘表，一直没有自己的一片根据地。当然刘备最大的招牌也不是智谋，是仁德，是能得人心，早期实力不济的时候依然选择救援公孙瓒，孔融等诸侯，带新野襄阳数十万百姓逃到江夏，这也能解释为什么关羽张飞等能一直死心塌地跟着刘备，为什么诸葛亮愿意出山。</p>
 而曹操192年领兖州牧，收黄巾贼三十万编制为青州兵，之后虽然和吕布，张绣等作战时互有胜负，但至少作为一方势力已成气候。后边能携天子令诸侯，破吕布，收徐州，败袁绍，在不到二十年的时间里统一北方，靠着是自己的大局观，战略眼光，带兵能力以及智谋。曹操手下能臣谋士虽然多，做整体战略部署谋划，拍板的还是曹操。并不是刘备集团那样寡头制，前期诸葛亮，中期一段时间诸葛亮和庞统，法正去世后就真正的只有诸葛亮一个人了。
@@ -162,7 +162,7 @@ setdiff(filter(series_full, 版本 == &quot;三國志1&quot;)$姓名, show_in_al
 <p>智谋不是决定成败的唯一因素，天时地利甚至个性都影响着曹操刘备孙权的发展进程，但它的确是关键的一环。综上所述，关于三人的智力的数值和变化我认为较为准确。</p>
 </div>
 <div class="section level4">
-<h4>统率对比</h4>
+<h4>2.2.3 统率对比</h4>
 <p><img src="/post/RoTC-Analysis_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
 <p>刘备和孙权的统率最终又交汇到了75左右。統率指的是带兵打仗能力，刘备一生虽然败仗打得多，但汉中之战也算是个人巅峰，孙权统治江东五十余年，一直没在曹魏的淮南地区占得便宜，虽说镇守合肥的历来都是曹魏的名将，但也稍微说明了点孙权的打仗能力。</p>
 <p>临时决定确认下《三国志1》是否整体数值偏高。</p>
@@ -406,7 +406,7 @@ wuhu_vs_wuzi &lt;- function(attrs){
 <p>于禁就不单独说了，武力变化不大，最后投降关羽晚节不保，也许影响了一点他的数值。</p>
 </div>
 <div id="-1" class="section level4">
-<h4>智力对比</h4>
+<h4>2.5.2 智力对比</h4>
 <pre class="r"><code>wuhu_vs_wuzi(&quot;智力&quot;)</code></pre>
 <p><img src="/post/RoTC-Analysis_files/figure-html/unnamed-chunk-30-1.png" width="672" /></p>
 <p>智力从图来看五子除了张辽总体趋势都是在上升的，并且平均来看高于五虎将，主要是张飞和马超拖了后腿，而黄忠马马虎虎，智力维持在60上下。</p>
@@ -494,7 +494,7 @@ wuhu_vs_wuzi &lt;- function(attrs){
 </div>
 </div>
 <div class="section level3">
-<h3>重名人物</h3>
+<h3>2.7 重名人物</h3>
 <p>玩《三国志10》的时候看到过两个马忠，两个李丰，那么还有没有别的重名人物呢。</p>
 <pre class="r"><code>series_full %&gt;% group_by(版本, 姓名) %&gt;%
   summarise(人数 = n()) %&gt;%
