@@ -1,0 +1,279 @@
+---
+title: 对光荣《三国志》系列人物做clustering
+author: Xinchen Pan
+date: '2018-04-14'
+slug: RoTC-Clusteirng
+categories:
+  - Machine Learning
+tags:
+  - R
+  - Clustering
+---
+
+
+
+<p>之前一篇文章对光荣《三国志》系列人物进行了数值上的分析, 一个同学看过后提议让我试下对数据进行clustering, 我觉得可行，也许会有有趣的发现，于是就有了这篇文章。</p>
+<div id="data-processing" class="section level2">
+<h2>Data Processing</h2>
+<p>在那篇文章里我最终用来分析的数据是一个大的data frame, 前6行数据如下所示。</p>
+<pre><code>##     姓名 統率 武力 智力 魅力 運勢    版本 政治 陸指 水指 體力
+## 1   丁奉   NA   22   81   29   47 三國志1   NA   NA   NA   81
+## 2   于禁   NA   72   20   25   28 三國志1   NA   NA   NA   82
+## 3 公孫瓚   NA   70   67   89   28 三國志1   NA   NA   NA   84
+## 4 太史慈   NA   97   47   84   34 三國志1   NA   NA   NA   88
+## 5   孔融   NA   82   61   50   77 三國志1   NA   NA   NA   84
+## 6   文聘   NA   84   22   64   83 三國志1   NA   NA   NA   88</code></pre>
+<p>它的维度为<span class="math inline">\(6123 \times 11\)</span>.</p>
+<pre class="r"><code>dim(dt)</code></pre>
+<pre><code>## [1] 6123   11</code></pre>
+<p>在做clustering之前我们还需要对数据进行些最后的处理。第一个问题是我们有重名的人物，李丰，马忠，张南，张温。我可以把他们找出来，然后改名，比如李丰(魏)， 李丰(蜀)， 不过问题是每代出现的可能是不同势力的同名人物，而这些人物数据属性又不突出，无法直接判断。当然我也可以从原数据中找出他们的字，用来判断势力，最终我决定不那么做，因为我认为这四个人不会对整体聚类分析有影响，于是就把他们drop了。</p>
+<pre class="r"><code>same_name &lt;- dt %&gt;% mutate(姓名 = as.character(姓名)) %&gt;%
+  group_by(姓名, 版本) %&gt;% 
+  summarise(次數 = n())  %&gt;% 
+  filter(次數 &gt; 1) %&gt;%
+  select(姓名) %&gt;%
+  unique() %&gt;%
+  unlist
+same_name</code></pre>
+<pre><code>##  姓名1  姓名2  姓名3  姓名4 
+## &quot;李豐&quot; &quot;馬忠&quot; &quot;張南&quot; &quot;張溫&quot;</code></pre>
+<pre class="r"><code>dt_unique &lt;- dt %&gt;% filter(!(姓名 %in% same_name))</code></pre>
+<p>《三国志3》中出现了陆指和水指的属性，分别代表人物在陆上指挥和水上指挥的能力，这是唯一一代出现这种属性的游戏，我的处理是对陆指和水指取平均值为统率。而体力和运势这两个属性也是只有一代有，我将它们也去掉。</p>
+<pre class="r"><code>dt_drop &lt;- dt_unique %&gt;% mutate(統率 = ifelse(版本 == &quot;三國志3&quot;, 
+  (水指 + 陸指) / 2, 統率)) %&gt;%
+  select(-水指, -陸指, -體力, -運勢)</code></pre>
+<p>最后对武力，智力，政治，统率和魅力求平均值，作为最终的数据。有一些人物完全没有统率，政治或者魅力，求均值得到的是<code>NaN</code>, 我们将它们drop之。</p>
+<pre class="r"><code>dt_mean &lt;- dt_drop %&gt;% mutate(姓名 = as.character(姓名)) %&gt;%
+  group_by(姓名) %&gt;%
+  select(-版本) %&gt;%
+  summarise_at(vars(統率:政治), mean,  na.rm = T)
+dt_final &lt;- na.omit(dt_mean)</code></pre>
+<p>我们来看看最终的数据</p>
+<pre class="r"><code>head(dt_final)</code></pre>
+<pre><code>## # A tibble: 6 x 6
+##   姓名    統率  武力  智力  魅力  政治
+##   &lt;chr&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 阿貴    36.0  74.0  36.0  27.0  29.0
+## 2 阿會喃  57.3  72.4  27.2  28.7  32.8
+## 3 鮑隆    55.7  68.3  37.1  33.8  26.0
+## 4 鮑三娘  72.0  83.0  56.0  75.0  36.0
+## 5 鮑信    63.9  56.7  61.2  61.4  63.9
+## 6 鮑忠    42.5  73.0  45.0  52.0  42.0</code></pre>
+</div>
+<div id="k-means-clustering" class="section level2">
+<h2>K-means Clustering</h2>
+<p>Clustering是一种非监督式的学习算法，我们的数据没有所谓的label，与之相对的是监督式学习，我们可以对labelled的数据进行预测和分类，比如预测房价和分类数字。 我们可以通过clustering来找出隐藏在数据中的结构，每个分出的类中的元素在某方面可能会有相似之处。</p>
+<p>Cluster的数量我们通常用<a href="https://en.wikipedia.org/wiki/Elbow_method_(clustering)">elbow method</a>来判断，我们希望between-cluster sum of squares/Total Variance的比例在达到某一个cluster数量之后，该比值增加的幅度减少，因为cluster增加该比值必然会增大， 我们不希望overfit data。 所以我们用elbow method，通过测试不同数量的cluster, 最终找出一个在比值变化最大之后减缓的那个cluster个数。</p>
+<p>从图中来看，选5个cluster比较合适，因为percentage of variance explained在4和5之间变化比较大，而之后上升速度明显变缓。</p>
+<pre class="r"><code>k &lt;- 15
+multi &lt;- sapply(2:k, function(x) kmeans(dt_final[, 2:6], centers = x))
+
+perc_var_explained &lt;- sapply(1:k-1, 
+  function(x) multi[,x]$betweenss/multi[,x]$totss) %&gt;% 
+  unlist() 
+
+ggplot(data.frame(Clusters = 2:k, perc_var_explained = 
+      perc_var_explained)) + 
+  geom_point(aes(x = Clusters, y = perc_var_explained)) +
+  ggtitle(&quot;Number of Clusters VS Explained Variance&quot;) +
+  scale_x_continuous(limits = c(2, 15), breaks = seq(2, 15, 1))</code></pre>
+<p><img src="/post/RoTC-Clusteirng_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>接着用R自带的<code>kmeans</code> function来进行聚类，我们先从每个聚类中选出20个人物，看看有没有什么特点。</p>
+<pre class="r"><code>set.seed(1024)
+cluster_mod &lt;- kmeans(dt_final[, 2:6], centers = 5)
+
+splitted &lt;- split(dt_final$姓名, cluster_mod$cluster)
+sample_splitted &lt;- lapply(1:5, 
+  function(x) splitted[[x]][sample(length(splitted[[x]]), 20)])
+
+names(sample_splitted) &lt;- paste0(&quot;Cluster&quot;, 1:5)</code></pre>
+<p>粗略的看下，似乎第一个cluster几乎都是武将，第二个cluster里多为各项属性都比较优秀的人物，第三个cluster多为智力属性不太高，武力也比较中庸的武将。Cluster4 和Cluster5没看出什么特点。</p>
+<pre class="r"><code>sample_splitted</code></pre>
+<pre><code>## $Cluster1
+##  [1] &quot;顏良&quot;   &quot;高翔&quot;   &quot;蔣班&quot;   &quot;蹋頓&quot;   &quot;孫異&quot;   &quot;曹昂&quot;   &quot;州泰&quot;  
+##  [8] &quot;軻比能&quot; &quot;馬隆&quot;   &quot;周昂&quot;   &quot;公孫範&quot; &quot;袁尚&quot;   &quot;周倉&quot;   &quot;王桃&quot;  
+## [15] &quot;馬雲騄&quot; &quot;曹洪&quot;   &quot;李通&quot;   &quot;丁封&quot;   &quot;馬騰&quot;   &quot;于禁&quot;  
+## 
+## $Cluster2
+##  [1] &quot;徐盛&quot;   &quot;龐娥&quot;   &quot;賈詡&quot;   &quot;呂範&quot;   &quot;司馬懿&quot; &quot;周魴&quot;   &quot;孫尚香&quot;
+##  [8] &quot;成公英&quot; &quot;向寵&quot;   &quot;劉馥&quot;   &quot;王渾&quot;   &quot;韓遂&quot;   &quot;袁遺&quot;   &quot;董和&quot;  
+## [15] &quot;劉表&quot;   &quot;李恢&quot;   &quot;荀攸&quot;   &quot;王濬&quot;   &quot;羊祜&quot;   &quot;楊肇&quot;  
+## 
+## $Cluster3
+##  [1] &quot;陳就&quot;   &quot;張達&quot;   &quot;鄂煥&quot;   &quot;劉丞&quot;   &quot;趙岑&quot;   &quot;韓忠&quot;   &quot;孫峻&quot;  
+##  [8] &quot;沙摩柯&quot; &quot;焦觸&quot;   &quot;武安國&quot; &quot;張象&quot;   &quot;范疆&quot;   &quot;魏續&quot;   &quot;王方&quot;  
+## [15] &quot;陳式&quot;   &quot;骨進&quot;   &quot;胡車兒&quot; &quot;潘璋&quot;   &quot;曹豹&quot;   &quot;文醜&quot;  
+## 
+## $Cluster4
+##  [1] &quot;王允&quot; &quot;劉巴&quot; &quot;孫登&quot; &quot;袁胤&quot; &quot;劉琮&quot; &quot;李珪&quot; &quot;劉永&quot; &quot;荀惲&quot; &quot;許攸&quot; &quot;蒯越&quot;
+## [11] &quot;閻象&quot; &quot;韓胤&quot; &quot;向朗&quot; &quot;趙累&quot; &quot;黨均&quot; &quot;鄒氏&quot; &quot;費詩&quot; &quot;甄氏&quot; &quot;許劭&quot; &quot;郭圖&quot;
+## 
+## $Cluster5
+##  [1] &quot;李樂&quot;   &quot;杜襲&quot;   &quot;夏侯存&quot; &quot;雅丹&quot;   &quot;王垢&quot;   &quot;王韜&quot;   &quot;左靈&quot;  
+##  [8] &quot;黃琬&quot;   &quot;公孫修&quot; &quot;關彝&quot;   &quot;龐柔&quot;   &quot;鮑忠&quot;   &quot;郝萌&quot;   &quot;太史享&quot;
+## [15] &quot;李肅&quot;   &quot;何進&quot;   &quot;秦琪&quot;   &quot;張先&quot;   &quot;樂就&quot;   &quot;徐榮&quot;</code></pre>
+<p>那么我们来看看每个cluster的平均属性，看能不能验证上边我们的想法。Cluster1的人物统率和武力较高，可能因为该cluster里猛将比较多，符合我们的猜测。。Cluster2里的人物各项属性都较高，除了武力低了些，里边的人物应该大多多项属性较为突出，是游戏中我们都希望得到的将领，相对比较全能。Cluster3的人物统率和武力相对较高，但不如Cluster1, 其它三维就更低的可怜，可以判断里边的人物可能多为中庸型武将。 Cluster4中的人物都有较高的智力，魅力和政治，统率和武力非常低，可以判断该cluster里多为文官。Cluster5平均属性全都在60以下，总体偏弱，唯一的特点大概就是没有特点吧。</p>
+<pre class="r"><code>lapply(1:5, function(x) dt_final %&gt;% 
+    filter(姓名 %in% splitted[[x]]) %&gt;% 
+    summarise_all(mean) %&gt;%
+    select(-姓名)) %&gt;%
+    rbindlist() %&gt;%
+    as.data.frame() %&gt;%
+    mutate(类 = paste0(&quot;Cluster&quot;, 1:5)) %&gt;%
+    select(6, 1:5)</code></pre>
+<pre><code>##         类     統率     武力     智力     魅力     政治
+## 1 Cluster1 68.85052 73.66874 53.59062 62.21448 46.93281
+## 2 Cluster2 71.77614 59.82638 76.96676 74.49536 74.50311
+## 3 Cluster3 52.55453 67.35665 33.75154 36.73511 28.21515
+## 4 Cluster4 28.85496 26.43456 67.65743 63.12949 70.54883
+## 5 Cluster5 45.16717 59.14660 51.63146 52.34532 50.49595</code></pre>
+<p>这里把每个聚类所有的武将都放出来。</p>
+<pre class="r"><code>names(splitted) &lt;- c(&quot;猛将&quot;, &quot;相对全能&quot;, &quot;弱武将&quot;, &quot;文官&quot;, &quot;总体较弱人物&quot;)
+splitted</code></pre>
+<pre><code>## $猛将
+##   [1] &quot;鮑三娘&quot; &quot;卑衍&quot;   &quot;步度根&quot; &quot;曹昂&quot;   &quot;曹純&quot;   &quot;曹洪&quot;   &quot;曹仁&quot;  
+##   [8] &quot;曹休&quot;   &quot;曹彰&quot;   &quot;徹里吉&quot; &quot;陳到&quot;   &quot;陳騫&quot;   &quot;陳武&quot;   &quot;淳于瓊&quot;
+##  [15] &quot;戴陵&quot;   &quot;單經&quot;   &quot;鄧賢&quot;   &quot;鄧忠&quot;   &quot;丁封&quot;   &quot;丁原&quot;   &quot;董衡&quot;  
+##  [22] &quot;董襲&quot;   &quot;董卓&quot;   &quot;馮習&quot;   &quot;傅僉&quot;   &quot;傅彤&quot;   &quot;傅嬰&quot;   &quot;甘寧&quot;  
+##  [29] &quot;高幹&quot;   &quot;高覽&quot;   &quot;高順&quot;   &quot;高翔&quot;   &quot;公孫度&quot; &quot;公孫範&quot; &quot;公孫康&quot;
+##  [36] &quot;公孫續&quot; &quot;公孫淵&quot; &quot;公孫越&quot; &quot;公孫瓚&quot; &quot;關平&quot;   &quot;關索&quot;   &quot;關統&quot;  
+##  [43] &quot;關興&quot;   &quot;關銀屏&quot; &quot;毌丘儉&quot; &quot;韓當&quot;   &quot;賀齊&quot;   &quot;侯成&quot;   &quot;侯選&quot;  
+##  [50] &quot;呼廚泉&quot; &quot;胡奮&quot;   &quot;胡烈&quot;   &quot;胡淵&quot;   &quot;胡遵&quot;   &quot;花鬘&quot;   &quot;華雄&quot;  
+##  [57] &quot;黃蓋&quot;   &quot;黃忠&quot;   &quot;紀靈&quot;   &quot;姜敘&quot;   &quot;蔣班&quot;   &quot;蔣義渠&quot; &quot;蔣欽&quot;  
+##  [64] &quot;焦彝&quot;   &quot;句安&quot;   &quot;軻比能&quot; &quot;雷銅&quot;   &quot;李典&quot;   &quot;李通&quot;   &quot;李歆&quot;  
+##  [71] &quot;廖化&quot;   &quot;凌操&quot;   &quot;凌統&quot;   &quot;留略&quot;   &quot;留平&quot;   &quot;留贊&quot;   &quot;劉封&quot;  
+##  [78] &quot;劉璝&quot;   &quot;劉磐&quot;   &quot;樓班&quot;   &quot;呂玲綺&quot; &quot;呂義&quot;   &quot;馬超&quot;   &quot;馬岱&quot;  
+##  [85] &quot;馬隆&quot;   &quot;馬騰&quot;   &quot;馬鐵&quot;   &quot;馬休&quot;   &quot;馬雲騄&quot; &quot;孟達&quot;   &quot;孟獲&quot;  
+##  [92] &quot;寗隨&quot;   &quot;龐德&quot;   &quot;龐會&quot;   &quot;牽弘&quot;   &quot;丘力居&quot; &quot;全琮&quot;   &quot;全端&quot;  
+##  [99] &quot;全禕&quot;   &quot;全懌&quot;   &quot;沈瑩&quot;   &quot;盛曼&quot;   &quot;石苞&quot;   &quot;士徽&quot;   &quot;宋謙&quot;  
+## [106] &quot;蘇飛&quot;   &quot;孫觀&quot;   &quot;孫冀&quot;   &quot;孫禮&quot;   &quot;孫韶&quot;   &quot;孫秀&quot;   &quot;孫異&quot;  
+## [113] &quot;孫震&quot;   &quot;蹋頓&quot;   &quot;太史慈&quot; &quot;唐彬&quot;   &quot;唐咨&quot;   &quot;陶濬&quot;   &quot;田楷&quot;  
+## [120] &quot;王惇&quot;   &quot;王平&quot;   &quot;王頎&quot;   &quot;王桃&quot;   &quot;王悅&quot;   &quot;魏邈&quot;   &quot;魏延&quot;  
+## [127] &quot;文虎&quot;   &quot;文聘&quot;   &quot;文鴦&quot;   &quot;吾彥&quot;   &quot;吳班&quot;   &quot;吳景&quot;   &quot;吳蘭&quot;  
+## [134] &quot;伍習&quot;   &quot;伍延&quot;   &quot;夏侯霸&quot; &quot;夏侯德&quot; &quot;夏侯蘭&quot; &quot;夏侯尚&quot; &quot;夏侯威&quot;
+## [141] &quot;夏侯淵&quot; &quot;徐晃&quot;   &quot;荀愷&quot;   &quot;閻行&quot;   &quot;顏良&quot;   &quot;嚴顏&quot;   &quot;楊奉&quot;  
+## [148] &quot;楊懷&quot;   &quot;楊任&quot;   &quot;楊欣&quot;   &quot;雍闓&quot;   &quot;於夫羅&quot; &quot;于禁&quot;   &quot;于詮&quot;  
+## [155] &quot;袁尚&quot;   &quot;袁術&quot;   &quot;袁譚&quot;   &quot;樂進&quot;   &quot;臧霸&quot;   &quot;張苞&quot;   &quot;張承&quot;  
+## [162] &quot;張虎&quot;   &quot;張濟&quot;   &quot;張梁&quot;   &quot;張曼成&quot; &quot;張任&quot;   &quot;張氏&quot;   &quot;張衛&quot;  
+## [169] &quot;張郃&quot;   &quot;張繡&quot;   &quot;張勳&quot;   &quot;張燕&quot;   &quot;張楊&quot;   &quot;張翼&quot;   &quot;張英&quot;  
+## [176] &quot;張遵&quot;   &quot;趙昂&quot;   &quot;趙廣&quot;   &quot;趙統&quot;   &quot;州泰&quot;   &quot;周昂&quot;   &quot;周倉&quot;  
+## [183] &quot;周善&quot;   &quot;周泰&quot;   &quot;朱靈&quot;   &quot;朱然&quot;   &quot;朱異&quot;   &quot;朱讚&quot;   &quot;諸葛靚&quot;
+## [190] &quot;諸葛尚&quot; &quot;鄒靖&quot;   &quot;祖茂&quot;   &quot;左奕&quot;  
+## 
+## $相对全能
+##   [1] &quot;鮑信&quot;   &quot;步闡&quot;   &quot;步協&quot;   &quot;步騭&quot;   &quot;蔡瑁&quot;   &quot;曹操&quot;   &quot;曹丕&quot;  
+##   [8] &quot;曹叡&quot;   &quot;曹真&quot;   &quot;陳表&quot;   &quot;陳登&quot;   &quot;陳宮&quot;   &quot;陳泰&quot;   &quot;成公英&quot;
+##  [15] &quot;程普&quot;   &quot;程昱&quot;   &quot;鄧艾&quot;   &quot;鄧芝&quot;   &quot;丁奉&quot;   &quot;董承&quot;   &quot;董和&quot;  
+##  [22] &quot;董厥&quot;   &quot;杜畿&quot;   &quot;杜預&quot;   &quot;法正&quot;   &quot;費耀&quot;   &quot;費禕&quot;   &quot;高柔&quot;  
+##  [29] &quot;關寧&quot;   &quot;關羽&quot;   &quot;毌丘甸&quot; &quot;郭淮&quot;   &quot;韓遂&quot;   &quot;闞澤&quot;   &quot;郝昭&quot;  
+##  [36] &quot;胡濟&quot;   &quot;胡質&quot;   &quot;皇甫嵩&quot; &quot;黃崇&quot;   &quot;黃權&quot;   &quot;黃月英&quot; &quot;霍峻&quot;  
+##  [43] &quot;霍弋&quot;   &quot;賈範&quot;   &quot;賈逵&quot;   &quot;賈詡&quot;   &quot;駱統&quot;   &quot;姜維&quot;   &quot;蔣琬&quot;  
+##  [50] &quot;沮授&quot;   &quot;李恢&quot;   &quot;李嚴&quot;   &quot;梁習&quot;   &quot;劉備&quot;   &quot;劉表&quot;   &quot;劉諶&quot;  
+##  [57] &quot;劉馥&quot;   &quot;劉劭&quot;   &quot;劉焉&quot;   &quot;劉虞&quot;   &quot;盧植&quot;   &quot;魯淑&quot;   &quot;魯肅&quot;  
+##  [64] &quot;陸景&quot;   &quot;陸凱&quot;   &quot;陸抗&quot;   &quot;陸遜&quot;   &quot;羅憲&quot;   &quot;呂岱&quot;   &quot;呂範&quot;  
+##  [71] &quot;呂據&quot;   &quot;呂蒙&quot;   &quot;馬良&quot;   &quot;馬謖&quot;   &quot;滿寵&quot;   &quot;孟建&quot;   &quot;龐娥&quot;  
+##  [78] &quot;龐統&quot;   &quot;牽招&quot;   &quot;審配&quot;   &quot;石韜&quot;   &quot;士燮&quot;   &quot;司馬孚&quot; &quot;司馬師&quot;
+##  [85] &quot;司馬望&quot; &quot;司馬炎&quot; &quot;司馬懿&quot; &quot;司馬攸&quot; &quot;司馬昭&quot; &quot;孫策&quot;   &quot;孫桓&quot;  
+##  [92] &quot;孫堅&quot;   &quot;孫皎&quot;   &quot;孫靜&quot;   &quot;孫權&quot;   &quot;孫尚香&quot; &quot;孫休&quot;   &quot;孫瑜&quot;  
+##  [99] &quot;田疇&quot;   &quot;田豐&quot;   &quot;田豫&quot;   &quot;王昶&quot;   &quot;王甫&quot;   &quot;王渾&quot;   &quot;王基&quot;  
+## [106] &quot;王經&quot;   &quot;王淩&quot;   &quot;王戎&quot;   &quot;王濬&quot;   &quot;王異&quot;   &quot;衛瓘&quot;   &quot;吾粲&quot;  
+## [113] &quot;吳懿&quot;   &quot;夏侯惇&quot; &quot;夏侯和&quot; &quot;夏侯惠&quot; &quot;向寵&quot;   &quot;辛評&quot;   &quot;徐盛&quot;  
+## [120] &quot;徐庶&quot;   &quot;荀攸&quot;   &quot;荀彧&quot;   &quot;閻柔&quot;   &quot;羊祜&quot;   &quot;楊阜&quot;   &quot;楊濟&quot;  
+## [127] &quot;楊儀&quot;   &quot;楊肇&quot;   &quot;虞汜&quot;   &quot;袁紹&quot;   &quot;袁熙&quot;   &quot;袁遺&quot;   &quot;張寶&quot;  
+## [134] &quot;張既&quot;   &quot;張角&quot;   &quot;張遼&quot;   &quot;張魯&quot;   &quot;張特&quot;   &quot;張悌&quot;   &quot;張嶷&quot;  
+## [141] &quot;趙雲&quot;   &quot;鍾會&quot;   &quot;鍾離牧&quot; &quot;周魴&quot;   &quot;周瑜&quot;   &quot;朱桓&quot;   &quot;朱據&quot;  
+## [148] &quot;朱儁&quot;   &quot;諸葛誕&quot; &quot;諸葛瑾&quot; &quot;諸葛恪&quot; &quot;諸葛亮&quot; &quot;諸葛喬&quot; &quot;諸葛瞻&quot;
+## 
+## $弱武将
+##   [1] &quot;阿貴&quot;     &quot;阿會喃&quot;   &quot;鮑隆&quot;     &quot;卞喜&quot;     &quot;波才&quot;     &quot;蔡和&quot;    
+##   [7] &quot;蔡陽&quot;     &quot;蔡中&quot;     &quot;曹豹&quot;     &quot;曹性&quot;     &quot;曹訓&quot;     &quot;陳橫&quot;    
+##  [13] &quot;陳紀&quot;     &quot;陳就&quot;     &quot;陳蘭&quot;     &quot;陳式&quot;     &quot;陳應&quot;     &quot;成廉&quot;    
+##  [19] &quot;成宜&quot;     &quot;程銀&quot;     &quot;程遠志&quot;   &quot;鄧茂&quot;     &quot;鄧義&quot;     &quot;典滿&quot;    
+##  [25] &quot;典韋&quot;     &quot;董旻&quot;     &quot;董荼那&quot;   &quot;俄何燒戈&quot; &quot;蛾遮塞&quot;   &quot;鄂煥&quot;    
+##  [31] &quot;樊稠&quot;     &quot;樊能&quot;     &quot;范疆&quot;     &quot;方悅&quot;     &quot;苻健&quot;     &quot;傅士仁&quot;  
+##  [37] &quot;高定&quot;     &quot;高昇&quot;     &quot;龔都&quot;     &quot;骨進&quot;     &quot;管亥&quot;     &quot;毌丘秀&quot;  
+##  [43] &quot;郭馬&quot;     &quot;郭汜&quot;     &quot;郭援&quot;     &quot;韓德&quot;     &quot;韓暹&quot;     &quot;韓玄&quot;    
+##  [49] &quot;韓忠&quot;     &quot;何儀&quot;     &quot;何植&quot;     &quot;胡車兒&quot;   &quot;胡赤兒&quot;   &quot;胡軫&quot;    
+##  [55] &quot;許褚&quot;     &quot;許儀&quot;     &quot;黃亂&quot;     &quot;黃祖&quot;     &quot;蔣奇&quot;     &quot;蔣舒&quot;    
+##  [61] &quot;焦觸&quot;     &quot;金環三結&quot; &quot;金旋&quot;     &quot;雷薄&quot;     &quot;冷苞&quot;     &quot;李別&quot;    
+##  [67] &quot;李傕&quot;     &quot;李堪&quot;     &quot;李鵬&quot;     &quot;李異&quot;     &quot;梁綱&quot;     &quot;梁寬&quot;    
+##  [73] &quot;梁興&quot;     &quot;粱剛&quot;     &quot;劉辯&quot;     &quot;劉丞&quot;     &quot;劉岱&quot;     &quot;劉宏&quot;    
+##  [79] &quot;劉辟&quot;     &quot;路昭&quot;     &quot;呂布&quot;     &quot;呂常&quot;     &quot;呂曠&quot;     &quot;呂威璜&quot;  
+##  [85] &quot;呂翔&quot;     &quot;馬邈&quot;     &quot;馬玩&quot;     &quot;忙牙長&quot;   &quot;孟坦&quot;     &quot;孟優&quot;    
+##  [91] &quot;迷當大王&quot; &quot;糜芳&quot;     &quot;木鹿大王&quot; &quot;穆順&quot;     &quot;牛輔&quot;     &quot;牛金&quot;    
+##  [97] &quot;潘鳳&quot;     &quot;潘臨&quot;     &quot;潘璋&quot;     &quot;裴元紹&quot;   &quot;千万&quot;     &quot;強端&quot;    
+## [103] &quot;橋蕤&quot;     &quot;秦朗&quot;     &quot;區星&quot;     &quot;麴義&quot;     &quot;沙摩柯&quot;   &quot;施朔&quot;    
+## [109] &quot;師纂&quot;     &quot;宋憲&quot;     &quot;眭固&quot;     &quot;眭元進&quot;   &quot;孫綝&quot;     &quot;孫皓&quot;    
+## [115] &quot;孫峻&quot;     &quot;孫歆&quot;     &quot;孫翊&quot;     &quot;孫仲&quot;     &quot;譚雄&quot;     &quot;田續&quot;    
+## [121] &quot;土安&quot;     &quot;王方&quot;     &quot;王門&quot;     &quot;王雙&quot;     &quot;王同&quot;     &quot;王真&quot;    
+## [127] &quot;王忠&quot;     &quot;魏續&quot;     &quot;文醜&quot;     &quot;文欽&quot;     &quot;烏延&quot;     &quot;武安國&quot;  
+## [133] &quot;兀突骨&quot;   &quot;奚泥&quot;     &quot;夏侯楙&quot;   &quot;謝旌&quot;     &quot;邢道榮&quot;   &quot;徐質&quot;    
+## [139] &quot;閻宇&quot;     &quot;嚴白虎&quot;   &quot;嚴綱&quot;     &quot;嚴輿&quot;     &quot;嚴政&quot;     &quot;晏明&quot;    
+## [145] &quot;楊昂&quot;     &quot;楊柏&quot;     &quot;楊醜&quot;     &quot;楊鋒&quot;     &quot;楊秋&quot;     &quot;楊祚&quot;    
+## [151] &quot;尹禮&quot;     &quot;尤突&quot;     &quot;于糜&quot;     &quot;俞涉&quot;     &quot;越吉&quot;     &quot;樂綝&quot;    
+## [157] &quot;笮融&quot;     &quot;張達&quot;     &quot;張飛&quot;     &quot;張橫&quot;     &quot;張闓&quot;     &quot;張球&quot;    
+## [163] &quot;張象&quot;     &quot;張顗&quot;     &quot;張著&quot;     &quot;趙岑&quot;     &quot;趙弘&quot;     &quot;周旨&quot;    
+## [169] &quot;朱褒&quot;     &quot;祝融&quot;     &quot;鄒丹&quot;    
+## 
+## $文官
+##   [1] &quot;卞氏&quot;     &quot;蔡氏&quot;     &quot;蔡琰&quot;     &quot;蔡邕&quot;     &quot;曹沖&quot;     &quot;曹芳&quot;    
+##   [7] &quot;曹奐&quot;     &quot;曹熊&quot;     &quot;曹植&quot;     &quot;岑昏&quot;     &quot;陳珪&quot;     &quot;陳矯&quot;    
+##  [13] &quot;陳琳&quot;     &quot;陳群&quot;     &quot;陳壽&quot;     &quot;陳震&quot;     &quot;程秉&quot;     &quot;程武&quot;    
+##  [19] &quot;崔林&quot;     &quot;崔琰&quot;     &quot;崔州平&quot;   &quot;大喬&quot;     &quot;黨均&quot;     &quot;貂蟬&quot;    
+##  [25] &quot;丁儀&quot;     &quot;董白&quot;     &quot;董朝&quot;     &quot;董允&quot;     &quot;董昭&quot;     &quot;杜瓊&quot;    
+##  [31] &quot;杜氏&quot;     &quot;樊建&quot;     &quot;樊氏&quot;     &quot;費詩&quot;     &quot;逢紀&quot;     &quot;伏完&quot;    
+##  [37] &quot;傅幹&quot;     &quot;傅嘏&quot;     &quot;傅巽&quot;     &quot;高堂隆&quot;   &quot;耿紀&quot;     &quot;耿武&quot;    
+##  [43] &quot;顧譚&quot;     &quot;顧雍&quot;     &quot;關純&quot;     &quot;管輅&quot;     &quot;郭嘉&quot;     &quot;郭氏&quot;    
+##  [49] &quot;郭圖&quot;     &quot;郭奕&quot;     &quot;郭攸之&quot;   &quot;國淵&quot;     &quot;韓嵩&quot;     &quot;韓胤&quot;    
+##  [55] &quot;何晏&quot;     &quot;和洽&quot;     &quot;胡沖&quot;     &quot;許靖&quot;     &quot;許劭&quot;     &quot;許汜&quot;    
+##  [61] &quot;許攸&quot;     &quot;華覈&quot;     &quot;華佗&quot;     &quot;華歆&quot;     &quot;桓範&quot;     &quot;桓階&quot;    
+##  [67] &quot;黃承彥&quot;   &quot;黃皓&quot;     &quot;賈充&quot;     &quot;蹇碩&quot;     &quot;簡雍&quot;     &quot;蔣斌&quot;    
+##  [73] &quot;蔣幹&quot;     &quot;蔣濟&quot;     &quot;金禕&quot;     &quot;孔融&quot;     &quot;孔伷&quot;     &quot;蒯良&quot;    
+##  [79] &quot;蒯越&quot;     &quot;李孚&quot;     &quot;李珪&quot;     &quot;李儒&quot;     &quot;李勝&quot;     &quot;李氏&quot;    
+##  [85] &quot;廖立&quot;     &quot;劉巴&quot;     &quot;劉禪&quot;     &quot;劉琮&quot;     &quot;劉和&quot;     &quot;劉理&quot;    
+##  [91] &quot;劉琦&quot;     &quot;劉氏&quot;     &quot;劉協&quot;     &quot;劉璿&quot;     &quot;劉曄&quot;     &quot;劉永&quot;    
+##  [97] &quot;劉璋&quot;     &quot;柳甫&quot;     &quot;婁圭&quot;     &quot;樓玄&quot;     &quot;陸績&quot;     &quot;陸鬱生&quot;  
+## [103] &quot;呂伯奢&quot;   &quot;呂凱&quot;     &quot;馬鈞&quot;     &quot;孟宗&quot;     &quot;糜氏&quot;     &quot;糜竺&quot;    
+## [109] &quot;禰衡&quot;     &quot;潘濬&quot;     &quot;龐羲&quot;     &quot;裴秀&quot;     &quot;濮陽興&quot;   &quot;橋玄&quot;    
+## [115] &quot;譙周&quot;     &quot;秦宓&quot;     &quot;全尚&quot;     &quot;尚弘&quot;     &quot;尚舉&quot;     &quot;邵悌&quot;    
+## [121] &quot;士壹&quot;     &quot;司馬徽&quot;   &quot;司馬朗&quot;   &quot;宋忠&quot;     &quot;孫登&quot;     &quot;孫和&quot;    
+## [127] &quot;孫亮&quot;     &quot;孫魯班&quot;   &quot;孫乾&quot;     &quot;孫氏&quot;     &quot;陶謙&quot;     &quot;滕脩&quot;    
+## [133] &quot;滕胤&quot;     &quot;萬彧&quot;     &quot;王粲&quot;     &quot;王楷&quot;     &quot;王朗&quot;     &quot;王累&quot;    
+## [139] &quot;王肅&quot;     &quot;王祥&quot;     &quot;王修&quot;     &quot;王業&quot;     &quot;王允&quot;     &quot;王則&quot;    
+## [145] &quot;韋康&quot;     &quot;韋昭&quot;     &quot;魏諷&quot;     &quot;魏攸&quot;     &quot;溫恢&quot;     &quot;吳綱&quot;    
+## [151] &quot;吳國太&quot;   &quot;吳質&quot;     &quot;郤正&quot;     &quot;戲志才&quot;   &quot;夏侯令女&quot; &quot;夏侯氏&quot;  
+## [157] &quot;夏侯玄&quot;   &quot;向朗&quot;     &quot;小喬&quot;     &quot;辛敞&quot;     &quot;辛毗&quot;     &quot;辛憲英&quot;  
+## [163] &quot;徐邈&quot;     &quot;徐氏&quot;     &quot;薛珝&quot;     &quot;薛瑩&quot;     &quot;薛綜&quot;     &quot;荀諶&quot;    
+## [169] &quot;荀爽&quot;     &quot;荀勗&quot;     &quot;荀顗&quot;     &quot;荀惲&quot;     &quot;閻圃&quot;     &quot;閻象&quot;    
+## [175] &quot;嚴畯&quot;     &quot;楊彪&quot;     &quot;楊弘&quot;     &quot;楊洪&quot;     &quot;楊密&quot;     &quot;楊琦&quot;    
+## [181] &quot;楊氏&quot;     &quot;楊修&quot;     &quot;伊籍&quot;     &quot;尹大目&quot;   &quot;尹默&quot;     &quot;于吉&quot;    
+## [187] &quot;虞翻&quot;     &quot;袁渙&quot;     &quot;袁胤&quot;     &quot;張春華&quot;   &quot;張紘&quot;     &quot;張華&quot;    
+## [193] &quot;張緝&quot;     &quot;張節&quot;     &quot;張鈞&quot;     &quot;張讓&quot;     &quot;張紹&quot;     &quot;張世平&quot;  
+## [199] &quot;張松&quot;     &quot;張休&quot;     &quot;張昭&quot;     &quot;趙累&quot;     &quot;甄氏&quot;     &quot;鄭度&quot;    
+## [205] &quot;鍾繇&quot;     &quot;鍾毓&quot;     &quot;諸葛均&quot;   &quot;宗預&quot;     &quot;鄒氏&quot;     &quot;左慈&quot;    
+## 
+## $总体较弱人物
+##   [1] &quot;鮑忠&quot;     &quot;蔡勳&quot;     &quot;曹安民&quot;   &quot;曹髦&quot;     &quot;曹爽&quot;     &quot;曹羲&quot;    
+##   [7] &quot;曹彥&quot;     &quot;曹宇&quot;     &quot;車冑&quot;     &quot;陳生&quot;     &quot;崔勇&quot;     &quot;帶來洞主&quot;
+##  [13] &quot;鄧龍&quot;     &quot;董璜&quot;     &quot;杜襲&quot;     &quot;朵思大王&quot; &quot;費觀&quot;     &quot;費棧&quot;    
+##  [19] &quot;高沛&quot;     &quot;公孫恭&quot;   &quot;公孫修&quot;   &quot;鞏志&quot;     &quot;關靖&quot;     &quot;關彝&quot;    
+##  [25] &quot;韓福&quot;     &quot;韓馥&quot;     &quot;韓浩&quot;     &quot;韓莒子&quot;   &quot;韓猛&quot;     &quot;郝萌&quot;    
+##  [31] &quot;何進&quot;     &quot;胡班&quot;     &quot;胡才&quot;     &quot;許昌&quot;     &quot;許貢&quot;     &quot;黃琬&quot;    
+##  [37] &quot;季雍&quot;     &quot;賈華&quot;     &quot;沮鵠&quot;     &quot;柯吾&quot;     &quot;孔秀&quot;     &quot;李封&quot;    
+##  [43] &quot;李蒙&quot;     &quot;李肅&quot;     &quot;李暹&quot;     &quot;李樂&quot;     &quot;梁緒&quot;     &quot;劉豹&quot;    
+##  [49] &quot;劉度&quot;     &quot;劉晙&quot;     &quot;劉先&quot;     &quot;劉賢&quot;     &quot;劉勳&quot;     &quot;劉循&quot;    
+##  [55] &quot;劉延&quot;     &quot;劉繇&quot;     &quot;倫直&quot;     &quot;呂公&quot;     &quot;呂建&quot;     &quot;呂虔&quot;    
+##  [61] &quot;馬漢&quot;     &quot;馬延&quot;     &quot;馬遵&quot;     &quot;芒中&quot;     &quot;毛玠&quot;     &quot;龐柔&quot;    
+##  [67] &quot;橋瑁&quot;     &quot;秦良&quot;     &quot;秦琪&quot;     &quot;丘本&quot;     &quot;丘建&quot;     &quot;去卑&quot;    
+##  [73] &quot;全紀&quot;     &quot;任峻&quot;     &quot;申耽&quot;     &quot;申儀&quot;     &quot;審榮&quot;     &quot;史渙&quot;    
+##  [79] &quot;史蹟&quot;     &quot;士匡&quot;     &quot;士祗&quot;     &quot;司馬伷&quot;   &quot;宋果&quot;     &quot;蘇由&quot;    
+##  [85] &quot;孫匡&quot;     &quot;孫朗&quot;     &quot;太史享&quot;   &quot;田章&quot;     &quot;王昌&quot;     &quot;王垢&quot;    
+##  [91] &quot;王含&quot;     &quot;王伉&quot;     &quot;王匡&quot;     &quot;王韜&quot;     &quot;王威&quot;     &quot;王植&quot;    
+##  [97] &quot;王子服&quot;   &quot;吳敦&quot;     &quot;吳巨&quot;     &quot;吳碩&quot;     &quot;吳子蘭&quot;   &quot;伍瓊&quot;    
+## [103] &quot;夏侯存&quot;   &quot;夏侯恩&quot;   &quot;辛明&quot;     &quot;徐榮&quot;     &quot;徐商&quot;     &quot;薛蘭&quot;    
+## [109] &quot;薛禮&quot;     &quot;薛悌&quot;     &quot;雅丹&quot;     &quot;楊齡&quot;     &quot;楊松&quot;     &quot;尹奉&quot;    
+## [115] &quot;尹楷&quot;     &quot;尹賞&quot;     &quot;袁燿&quot;     &quot;樂就&quot;     &quot;張布&quot;     &quot;張邈&quot;    
+## [121] &quot;張先&quot;     &quot;張允&quot;     &quot;趙範&quot;     &quot;趙衢&quot;     &quot;趙叡&quot;     &quot;鍾進&quot;    
+## [127] &quot;周昕&quot;     &quot;朱光&quot;     &quot;朱治&quot;     &quot;諸葛緒&quot;   &quot;卓膺&quot;     &quot;宗寶&quot;    
+## [133] &quot;左靈&quot;</code></pre>
+</div>

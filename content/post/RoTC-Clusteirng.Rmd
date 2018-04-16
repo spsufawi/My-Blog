@@ -1,0 +1,137 @@
+---
+title: 对光荣《三国志》系列人物做clustering
+author: Xinchen Pan
+date: '2018-04-14'
+slug: RoTC-Clusteirng
+categories:
+  - Machine Learning
+tags:
+  - R
+  - Clustering
+---
+
+之前一篇文章对光荣《三国志》系列人物进行了数值上的分析, 一个同学看过后提议让我试下对数据进行clustering, 我觉得可行，也许会有有趣的发现，于是就有了这篇文章。
+
+##Data Processing
+
+在那篇文章里我最终用来分析的数据是一个大的data frame, 前6行数据如下所示。
+
+```{r, echo=FALSE, message=FALSE, results="hide"}
+library(dplyr)
+library(ggplot2)
+library(data.table)
+Sys.setlocale('LC_ALL','Chs')
+```
+
+```{r,echo=FALSE}
+dt <- read.csv("final.csv")
+head(dt)
+```
+它的维度为\(6123 \times 11\).
+```{r}
+dim(dt)
+```
+
+在做clustering之前我们还需要对数据进行些最后的处理。第一个问题是我们有重名的人物，李丰，马忠，张南，张温。我可以把他们找出来，然后改名，比如李丰(魏)， 李丰(蜀)， 不过问题是每代出现的可能是不同势力的同名人物，而这些人物数据属性又不突出，无法直接判断。当然我也可以从原数据中找出他们的字，用来判断势力，最终我决定不那么做，因为我认为这四个人不会对整体聚类分析有影响，于是就把他们drop了。
+
+```{r}
+same_name <- dt %>% mutate(姓名 = as.character(姓名)) %>%
+  group_by(姓名, 版本) %>% 
+  summarise(次數 = n())  %>% 
+  filter(次數 > 1) %>%
+  select(姓名) %>%
+  unique() %>%
+  unlist
+same_name
+```
+
+```{r}
+dt_unique <- dt %>% filter(!(姓名 %in% same_name))
+```
+
+《三国志3》中出现了陆指和水指的属性，分别代表人物在陆上指挥和水上指挥的能力，这是唯一一代出现这种属性的游戏，我的处理是对陆指和水指取平均值为统率。而体力和运势这两个属性也是只有一代有，我将它们也去掉。
+
+```{r}
+dt_drop <- dt_unique %>% mutate(統率 = ifelse(版本 == "三國志3", 
+  (水指 + 陸指) / 2, 統率)) %>%
+  select(-水指, -陸指, -體力, -運勢)
+```
+
+最后对武力，智力，政治，统率和魅力求平均值，作为最终的数据。有一些人物完全没有统率，政治或者魅力，求均值得到的是<code>NaN</code>, 我们将它们drop之。
+
+```{r}
+dt_mean <- dt_drop %>% mutate(姓名 = as.character(姓名)) %>%
+  group_by(姓名) %>%
+  select(-版本) %>%
+  summarise_at(vars(統率:政治), mean,  na.rm = T)
+dt_final <- na.omit(dt_mean)
+```
+
+
+我们来看看最终的数据
+
+```{r}
+head(dt_final)
+```
+
+##K-means Clustering
+
+Clustering是一种非监督式的学习算法，我们的数据没有所谓的label，与之相对的是监督式学习，我们可以对labelled的数据进行预测和分类，比如预测房价和分类数字。
+我们可以通过clustering来找出隐藏在数据中的结构，每个分出的类中的元素在某方面可能会有相似之处。
+
+Cluster的数量我们通常用[elbow method](https://en.wikipedia.org/wiki/Elbow_method_(clustering))来判断，我们希望between-cluster sum of squares/Total Variance的比例在达到某一个cluster数量之后，该比值增加的幅度减少，因为cluster增加该比值必然会增大， 我们不希望overfit data。 所以我们用elbow method，通过测试不同数量的cluster, 最终找出一个在比值变化最大之后减缓的那个cluster个数。
+
+
+从图中来看，选5个cluster比较合适，因为percentage of variance explained在4和5之间变化比较大，而之后上升速度明显变缓。
+```{r}
+k <- 15
+multi <- sapply(2:k, function(x) kmeans(dt_final[, 2:6], centers = x))
+
+perc_var_explained <- sapply(1:k-1, 
+  function(x) multi[,x]$betweenss/multi[,x]$totss) %>% 
+  unlist() 
+
+ggplot(data.frame(Clusters = 2:k, perc_var_explained = 
+      perc_var_explained)) + 
+  geom_point(aes(x = Clusters, y = perc_var_explained)) +
+  ggtitle("Number of Clusters VS Explained Variance") +
+  scale_x_continuous(limits = c(2, 15), breaks = seq(2, 15, 1))
+```
+
+接着用R自带的<code>kmeans</code> function来进行聚类，我们先从每个聚类中选出20个人物，看看有没有什么特点。
+```{r}
+set.seed(1024)
+cluster_mod <- kmeans(dt_final[, 2:6], centers = 5)
+
+splitted <- split(dt_final$姓名, cluster_mod$cluster)
+sample_splitted <- lapply(1:5, 
+  function(x) splitted[[x]][sample(length(splitted[[x]]), 20)])
+
+names(sample_splitted) <- paste0("Cluster", 1:5)
+```
+
+粗略的看下，似乎第一个cluster几乎都是武将，第二个cluster里多为各项属性都比较优秀的人物，第三个cluster多为智力属性不太高，武力也比较中庸的武将。Cluster4 和Cluster5没看出什么特点。
+```{r}
+sample_splitted
+```
+
+那么我们来看看每个cluster的平均属性，看能不能验证上边我们的想法。Cluster1的人物统率和武力较高，可能因为该cluster里猛将比较多，符合我们的猜测。。Cluster2里的人物各项属性都较高，除了武力低了些，里边的人物应该大多多项属性较为突出，是游戏中我们都希望得到的将领，相对比较全能。Cluster3的人物统率和武力相对较高，但不如Cluster1, 其它三维就更低的可怜，可以判断里边的人物可能多为中庸型武将。 Cluster4中的人物都有较高的智力，魅力和政治，统率和武力非常低，可以判断该cluster里多为文官。Cluster5平均属性全都在60以下，总体偏弱，唯一的特点大概就是没有特点吧。
+
+
+```{r, warning=FALSE}
+lapply(1:5, function(x) dt_final %>% 
+    filter(姓名 %in% splitted[[x]]) %>% 
+    summarise_all(mean) %>%
+    select(-姓名)) %>%
+    rbindlist() %>%
+    as.data.frame() %>%
+    mutate(类 = paste0("Cluster", 1:5)) %>%
+    select(6, 1:5)
+
+```
+这里把每个聚类所有的武将都放出来。
+```{r}
+names(splitted) <- c("猛将", "相对全能", "弱武将", "文官", "总体较弱人物")
+splitted
+```
+
