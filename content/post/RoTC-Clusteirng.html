@@ -128,7 +128,8 @@ names(sample_splitted) &lt;- paste0(&quot;Cluster&quot;, 1:5)</code></pre>
 ## 4 Cluster4 28.85496 26.43456 67.65743 63.12949 70.54883
 ## 5 Cluster5 45.16717 59.14660 51.63146 52.34532 50.49595</code></pre>
 <p>这里把每个聚类所有的武将都放出来。</p>
-<pre class="r"><code>names(splitted) &lt;- c(&quot;猛将&quot;, &quot;相对全能&quot;, &quot;弱武将&quot;, &quot;文官&quot;, &quot;总体较弱人物&quot;)
+<p>注：我们发现张飞，文丑武力超高的人物被聚类到为了弱武将，第一个原因是其它武将武力比较低，第二个是张飞文丑的智力都很低，而这个cluster基本汇聚的都是智力低的武将。</p>
+<pre class="r"><code>names(splitted) &lt;- c(&quot;猛将&quot;, &quot;相对全能&quot;, &quot;智力较低武将&quot;, &quot;文官&quot;, &quot;总体较弱人物&quot;)
 splitted</code></pre>
 <pre><code>## $猛将
 ##   [1] &quot;鮑三娘&quot; &quot;卑衍&quot;   &quot;步度根&quot; &quot;曹昂&quot;   &quot;曹純&quot;   &quot;曹洪&quot;   &quot;曹仁&quot;  
@@ -184,7 +185,7 @@ splitted</code></pre>
 ## [141] &quot;趙雲&quot;   &quot;鍾會&quot;   &quot;鍾離牧&quot; &quot;周魴&quot;   &quot;周瑜&quot;   &quot;朱桓&quot;   &quot;朱據&quot;  
 ## [148] &quot;朱儁&quot;   &quot;諸葛誕&quot; &quot;諸葛瑾&quot; &quot;諸葛恪&quot; &quot;諸葛亮&quot; &quot;諸葛喬&quot; &quot;諸葛瞻&quot;
 ## 
-## $弱武将
+## $智力较低武将
 ##   [1] &quot;阿貴&quot;     &quot;阿會喃&quot;   &quot;鮑隆&quot;     &quot;卞喜&quot;     &quot;波才&quot;     &quot;蔡和&quot;    
 ##   [7] &quot;蔡陽&quot;     &quot;蔡中&quot;     &quot;曹豹&quot;     &quot;曹性&quot;     &quot;曹訓&quot;     &quot;陳橫&quot;    
 ##  [13] &quot;陳紀&quot;     &quot;陳就&quot;     &quot;陳蘭&quot;     &quot;陳式&quot;     &quot;陳應&quot;     &quot;成廉&quot;    
