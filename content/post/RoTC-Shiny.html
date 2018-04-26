@@ -1,0 +1,41 @@
+---
+title: 用Shiny制作《三国志》系列人物搜索工具
+author: Xinchen Pan
+date: '2018-04-25'
+slug: RoTC-Shiny
+categories:
+  - Data Analysis
+tags:
+  - Shiny
+  - R
+---
+
+
+
+<p>先上成果链接<a href = https://nathanpan.shinyapps.io/RoTC-Searching/> https://nathanpan.shinyapps.io/RoTC-Searching/</a></p>
+<p>写的时候发现好些遇到的bug没法reproduce了，记不到的只能凭记忆来写了。</p>
+<p>花了大概5个晚上的所有时间，终于把这个shiny完成了，说一点感想，最大的问题还是语言，中文的变量名让问题变得十分复杂。最先我想用<code>renderText</code>输出武将的列传， 结果怎么都是出bug，于是我一个一个字删除，终于发现是<strong>謀</strong>这个字的问题，于是改成了<code>renderUI</code>, 这样输出的是html project而不是single-element character vector. 接下来是本地图片找不到，搜了下原因，找到了这个 <a href = https://github.com/rstudio/shiny/issues/1858>页面</a>. 有人问为什么downloadHandle does not recognize Chinese file name, Shiny的作者的回答，原因是shiny里的internal<code>URLencode</code>没有做正常<code>URLencode</code>应该做的事。我发现如果“丁奉”被encode成<code> “%B6%A1%B7%EE”</code>，图片就能显示成功，如果是<code>“%E4%B8%81%E5%A5%89”</code>就不行，而如果直接用 <code>URLencode(input$name)</code>出来的也是 <code>“%E4%B8%81%E5%A5%89”</code>。最后想到的方法是先把所有出现的人物用<code>URLencode</code>转成正确的percent coding. 然后给这个vector命名为该角色的汉字，这样总算成功了。</p>
+<p>本地运行一切都没问题的时候，我把它deploy到了专门host Shiny的网站，问题大了。由于我已经写了100多行左右的代码，现在debug起来就很麻烦。最早的提示一直是package找不到，好吧我强行下载到文件夹里一起上传，接着提示说无法把locale设置成“chs”。我当时认为会不会是我数据里有个别乱码，于是找出来删掉，不成功。我想会不会是不能用<code>Sys.setlocale(“LC_ALL”, “chs”)</code>，于是用<code>tmcn::setchs</code>，但这两个function严格来说干的是同样的事，同样不成功，提示<code>tmcn</code>package找不到，就算我下载到指定文件夹。当晚放弃。第二天从头到尾大型debug，去掉了所有code，发现显示中文是完全没有问题的，看来问题出在了中文变量名这里，把所有类似 <code>input$姓名</code>，<code>dt %&gt;% select(姓名)</code>全部改掉。Deploy成功。</p>
+<p>最终的一个大问题是图片显示不出来，不管是<code>“%B6%A1%B7%EE”</code>还是<code>“丁奉”</code>, 正反转化都没用。好吧，我早该有这个觉悟，把所有图片名改成数字，什么？还是不行。再次试着把图片地址输入到Chrome看看，嗯？有图片。默认的IE不知道出于什么原因显示不了图片，搞定。</p>
+<p>每次deploy需要花3分钟，本地却完全正常，让我十分抓狂，心力有点交瘁，以至于最后写出的code完全不是自己本来的style了，命名变量随便，重复copyp paste， 排版丑陋，想添加的彩蛋也没加上。</p>
+<p>总结：当我搜一个问题没有什么答案的时候，很大可能是我的问题比较低级。当我为了修补一个错误花费了数小时的时候，我不应该继续下去，因为我的状态已经疯狂了，不求甚解，网上搜到什么copy/paste的试，脑子不想。正确的方法应该是改天再仔细想想。通过这个shiny的project，还是学到了很多，对于一种问题的多种解决方法，debug方法。</p>
+<p>其实现在的shiny还存在三个小问题</p>
+<ol style="list-style-type: decimal">
+<li><p>如果输入不是《三国志12》的人物会导致姓名和图片无法显示，而《三国志12》只有400多个人物，有很大可能你输入的人物存在于9-11代但不存在于12代。原因在于我用的寻找图片文件名的方法，四个图片输出的function共用一个input。解决方法: 用<code>try</code>. 这个不难搞定。</p></li>
+<li><p>第二个问题就是《三国志9》的人物与头像对不上。我下得三国人物头像9-12代中只有11代有人名，第十二代出场的人物我是从网上抓数据抓出来的。第十代和第十一代的出场人物也几乎一样，用十一代替换第十代即可。而第九代和第十一代只有前100个左右完全一样，到了后边就对不上号了。我放第九代人物头像的原因完全是觉得四个人物对照更好看些。总体来看第十一代和第十二代头像人物完全对的上号，第十代95%对的上，第九代只有最耳熟能详的那些人能对的上。</p></li>
+<li><p>简体繁体混乱，如同上边说的，不想去改了。</p></li>
+</ol>
+<pre class="r"><code>#没太多抓数据的经验，下面的web scaping可能手法不对
+library(rvest)
+info &lt;- read_html(&quot;http://san.nobuwiki.org/sancg/san12_01&quot;)
+twelve &lt;- info  %&gt;%
+  html_node(&quot;body&quot;)%&gt;% 
+  html_node(&quot;section&quot;)%&gt;%
+  html_node(&quot;div&quot;)%&gt;%
+  html_node(&quot;div&quot;)%&gt;%
+  html_node(&quot;article&quot;)%&gt;%
+  html_nodes(&quot;div&quot;) %&gt;%
+  html_text()
+head(twelve)</code></pre>
+<pre><code>## [1] &quot;楊奉Yang Feng&quot; &quot;張飛Zhang Fei&quot; &quot;關羽Guan Yu&quot;   &quot;呂布Lu Bu&quot;    
+## [5] &quot;馬超Ma Chao&quot;   &quot;袁紹Yuan Shao&quot;</code></pre>
