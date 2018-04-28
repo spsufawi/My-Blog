@@ -12,7 +12,7 @@ tags:
 
 先上成果链接<a href = https://nathanpan.shinyapps.io/RoTC-Searching/> https://nathanpan.shinyapps.io/RoTC-Searching/</a>
 
-写的时候发现好些遇到的bug没法reproduce了，记不到的只能凭记忆来写了。
+写的时候发现好些遇到的bug没法reproduce了，只好凭记忆来写了。
 
 花了大概5个晚上的所有时间，终于把这个shiny完成了，说一点感想，最大的问题还是语言，中文的变量名让问题变得十分复杂。最先我想用<code>renderText</code>输出武将的列传， 结果怎么都是出bug，于是我一个一个字删除，终于发现是<strong>謀</strong>这个字的问题，于是改成了<code>renderUI</code>, 这样输出的是html project而不是single-element character vector. 接下来是本地图片找不到，搜了下原因，找到了这个 <a href = https://github.com/rstudio/shiny/issues/1858>页面</a>. 有人问为什么downloadHandle does not recognize Chinese file name, Shiny的作者的回答，原因是shiny里的internal<code>URLencode</code>没有做正常<code>URLencode</code>应该做的事。我发现如果“丁奉”被encode成<code> "%B6%A1%B7%EE"</code>，图片就能显示成功，如果是<code>"%E4%B8%81%E5%A5%89"</code>就不行，而如果直接用 <code>URLencode(input$name)</code>出来的也是 <code>"%E4%B8%81%E5%A5%89"</code>。最后想到的方法是先把所有出现的人物用<code>URLencode</code>转成正确的percent coding. 然后给这个vector命名为该角色的汉字，这样总算成功了。
 
