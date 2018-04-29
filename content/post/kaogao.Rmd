@@ -2,7 +2,7 @@
 title: 2010年广东高考文科数学填空题第一题
 author: Xinchen Pan
 date: '2018-04-28'
-slug: kaogao
+slug: Gaokao
 categories:
   - Mathematics
 tags: []
