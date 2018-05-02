@@ -1,5 +1,5 @@
 ---
-title: Understanding rnorm, dnorm, pnorm和qnorm
+title: Understanding rnorm, dnorm, pnorm and qnorm
 author: Xinchen Pan
 date: '2018-05-01'
 slug: rnorm-dnorm-pnorm-qnorm
