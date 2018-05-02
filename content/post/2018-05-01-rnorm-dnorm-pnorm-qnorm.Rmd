@@ -12,7 +12,7 @@ tags:
 
 I just use the normal distribution as an example in the title. The <code>d, p, q, r</code> are a family of functions for different distributions. Though we can understand the meaning of them after taking an introductory mathematical statistics course, sometimes they still look comfusing, especially for <code>p</code> and <code>q</code>. 
 
-Let's start by two <code>d</code> and <code>r</code>
+Let's start by <code>dnorm</code> and <code>rnorm</code>
 
 ##dnorm
 
