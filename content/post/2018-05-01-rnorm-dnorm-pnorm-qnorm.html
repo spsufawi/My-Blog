@@ -1,0 +1,76 @@
+---
+title: Understanding rnorm, dnorm, pnorm和qnorm
+author: Xinchen Pan
+date: '2018-05-01'
+slug: rnorm-dnorm-pnorm-qnorm
+categories:
+  - Statistics
+tags:
+  - R
+  - statistics
+---
+
+
+
+<p>I just use the normal distribution as an example in the title. The <code>d, p, q, r</code> are a family of functions for different distributions. Though we can understand the meaning of them after taking an introductory mathematical statistics course, sometimes they still look comfusing, especially for <code>p</code> and <code>q</code>.</p>
+<p>Let’s start by two <code>d</code> and <code>r</code></p>
+<div id="dnorm" class="section level2">
+<h2>dnorm</h2>
+<p>This <code>dnorm(x, mean = 0, sd = 1, log = FALSE)</code> function simply calculates the result for the value plugged into the probability density distribution.</p>
+<p>So for the normal distribution with <span class="math inline">\(mean=0, sd=1\)</span>, we have</p>
+<p><span class="math display">\[
+\frac{1}{\sqrt{2\pi}}e^{\frac{-x^2}{2}}
+\]</span></p>
+<p>If we plug <span class="math inline">\(x=2\)</span> inside the pdf, we have</p>
+<pre class="r"><code>1 / sqrt(2 * pi) * exp(-2^2 / 2)</code></pre>
+<pre><code>## [1] 0.05399097</code></pre>
+<p>which is the same as</p>
+<pre class="r"><code>dnorm(x = 2, mean = 0, sd = 1)</code></pre>
+<pre><code>## [1] 0.05399097</code></pre>
+</div>
+<div id="rnorm" class="section level2">
+<h2>rnorm</h2>
+<p><code>rnorm(n, mean = 0, sd = 1)</code> returns <em>n</em> random values that belong to the normal distribution with a <span class="math inline">\(mean=0\)</span> and <span class="math inline">\(sd=1\)</span>.</p>
+<p>For example, for <span class="math inline">\(N(0,1)\)</span>, if we generate 100 values from it. It is very unlikely that we will get a value of 10000. In fact, we are able to get the probability of having a value of 10000 from this <span class="math inline">\(N(0,1)\)</span> distribution by using <code>pnorm</code>. Mostly we will have some values are not far from 0 depending on the standard deviation. The mean and sd we got from the randomly generately values will get close to the theoretical value as <em>n</em> gets larger. <a href="https://en.wikipedia.org/wiki/Law_of_large_numbers">Law of large numbers</a></p>
+<pre class="r"><code>rnorm(100, mean = 0, sd = 1)</code></pre>
+<pre><code>##   [1] -1.26519253 -0.06963757  1.73372506 -0.59172795 -1.22530558
+##   [6]  0.93211605  0.16391141  0.02069056 -0.65897487  1.79618961
+##  [11] -0.52932078 -0.81345072  0.68223418 -0.18507460 -1.46148056
+##  [16] -1.22767238  0.01167304 -0.54001836  0.38245290  0.47972738
+##  [21] -1.04991616  1.15012654 -0.92166216  1.49636334 -0.33348032
+##  [26]  0.82202325 -0.19534524 -1.17312974 -1.41155991  0.45791370
+##  [31]  0.06898772  0.06509836  1.24854581 -0.19685391 -0.75824342
+##  [36]  0.25753696 -1.12911434  0.50215718  0.79177601  1.59243614
+##  [41] -0.69336553 -0.90831584  1.58919622  0.10770186  0.39368271
+##  [46]  0.27555742  0.03471622 -1.22170896 -0.31787061  1.25785242
+##  [51] -0.88372055  0.65081362 -1.17978970  0.69521203 -0.49784869
+##  [56]  0.03064821 -0.06372081  0.54667916 -0.54883630  0.49967075
+##  [61]  0.64480814 -1.04651421 -0.71935583  0.48807937  1.23166274
+##  [66]  0.31682106  0.54530224  0.63399543 -0.08354151 -0.54539220
+##  [71]  0.29767354  0.08420619  1.27519922  0.14076185 -1.47770780
+##  [76] -0.01679117 -0.06813699  0.97998418  0.28458789 -0.54774003
+##  [81] -0.61946045  0.74013136 -0.08452172 -0.25870099 -0.46343356
+##  [86] -1.83819076  1.05944150  0.28795258  0.20713758  0.22498545
+##  [91] -1.55809247  0.10363488 -0.98048527 -0.68055214 -0.13159538
+##  [96] -1.06158025 -0.98846824 -1.14765207 -1.82333693  0.13004451</code></pre>
+<pre class="r"><code>mean(rnorm(100, mean = 0, sd = 1))</code></pre>
+<pre><code>## [1] -0.06869529</code></pre>
+</div>
+<div id="pnorm" class="section level2">
+<h2>pnorm</h2>
+<p><code>pnorm(q, mean = 0, sd = 1, lower.tail = TRUE, log.p = FALSE)</code> returns the probabality of <span class="math inline">\(p(X&lt;=x)\)</span> by default. If we set <code>low.tail = FALSE</code>, then it returns <span class="math inline">\(p(X&gt;x)=1-p(X&lt;=x)\)</span>.</p>
+<p>Let’s look at an extreme example which is the one I mentioned above. What is the probability that <span class="math inline">\(p(X&lt;10000)\)</span> for <span class="math inline">\(N(0,1)\)</span>. It is almost certainly that it should be 1. In another word, <span class="math inline">\(p(x&lt;10000)\)</span> is 0. You can imagine the chance of having a human being whose height is 40m(<a href="https://en.wikipedia.org/wiki/Ultraman">ultraman</a>).</p>
+<p>It is important to remember the function returns probability.</p>
+<pre class="r"><code>pnorm(0, mean = 0, sd = 1)</code></pre>
+<pre><code>## [1] 0.5</code></pre>
+<pre class="r"><code>pnorm(10000, mean = 0, sd = 1)</code></pre>
+<pre><code>## [1] 1</code></pre>
+</div>
+<div id="qnorm" class="section level2">
+<h2>qnorm</h2>
+<p><code>qnorm(p, mean = 0, sd = 1, lower.tail = TRUE, log.p = FALSE)</code> is the inverse of <code>pnorm</code>, so the parameter <code>p</code> inside the qnorm need to be within <span class="math inline">\([0,1]\)</span>.</p>
+<pre class="r"><code>qnorm(0.999, mean=0, sd=1, lower.tail = TRUE)</code></pre>
+<pre><code>## [1] 3.090232</code></pre>
+<pre class="r"><code>pnorm(3.090232, mean=0, sd=1, lower.tail = TRUE)</code></pre>
+<pre><code>## [1] 0.999</code></pre>
+</div>

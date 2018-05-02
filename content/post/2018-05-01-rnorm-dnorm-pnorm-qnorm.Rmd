@@ -1,0 +1,73 @@
+---
+title: Understanding rnorm, dnorm, pnorm和qnorm
+author: Xinchen Pan
+date: '2018-05-01'
+slug: rnorm-dnorm-pnorm-qnorm
+categories:
+  - Statistics
+tags:
+  - R
+  - statistics
+---
+
+I just use the normal distribution as an example in the title. The <code>d, p, q, r</code> are a family of functions for different distributions. Though we can understand the meaning of them after taking an introductory mathematical statistics course, sometimes they still look comfusing, especially for <code>p</code> and <code>q</code>. 
+
+Let's start by two <code>d</code> and <code>r</code>
+
+##dnorm
+
+This <code>dnorm(x, mean = 0, sd = 1, log = FALSE)</code> function simply calculates the result for the value plugged into the probability density distribution.
+
+So for the normal distribution with \(mean=0, sd=1\), we have
+
+\[
+\frac{1}{\sqrt{2\pi}}e^{\frac{-x^2}{2}}
+\]
+
+If we plug \(x=2\) inside the pdf, we have
+
+```{r}
+1 / sqrt(2 * pi) * exp(-2^2 / 2)
+```
+
+which is the same as 
+
+```{r}
+dnorm(x = 2, mean = 0, sd = 1)
+```
+
+##rnorm
+
+<code>rnorm(n, mean = 0, sd = 1)</code> returns *n* random values that belong to the normal distribution with a \(mean=0\) and \(sd=1\).
+
+For example, for \(N(0,1)\), if we generate 100 values from it. It is very unlikely that we will get a value of 10000. In fact, we are able to get the probability of having a value of 10000 from this  \(N(0,1)\) distribution by using <code>pnorm</code>. Mostly we will have some values are not far from 0 depending on the standard deviation. The mean and sd we got from the randomly generately values will get close to the theoretical value as *n* gets larger. [Law of large numbers](https://en.wikipedia.org/wiki/Law_of_large_numbers)
+
+```{r}
+rnorm(100, mean = 0, sd = 1)
+mean(rnorm(100, mean = 0, sd = 1))
+```
+
+##pnorm
+
+<code>pnorm(q, mean = 0, sd = 1, lower.tail = TRUE, log.p = FALSE)</code> returns the probabality of \(p(X<=x)\) by default. If we set <code>low.tail = FALSE</code>, then it returns \(p(X>x)=1-p(X<=x)\).
+
+Let's look at an extreme example which is the one I mentioned above. What is the probability that \(p(X<10000)\) for \(N(0,1)\). It is almost certainly that it should be 1. In another word, \(p(x<10000)\) is 0. You can imagine the chance of having a human being whose height is 40m([ultraman](https://en.wikipedia.org/wiki/Ultraman)).
+
+It is important to remember the function returns probability.
+```{r}
+pnorm(0, mean = 0, sd = 1)
+pnorm(10000, mean = 0, sd = 1)
+```
+
+##qnorm
+
+<code>qnorm(p, mean = 0, sd = 1, lower.tail = TRUE, log.p = FALSE)</code> is the inverse of <code>pnorm</code>, so the parameter <code>p</code> inside the qnorm need to be within \([0,1]\). 
+
+```{r}
+qnorm(0.999, mean=0, sd=1, lower.tail = TRUE)
+```
+
+```{r}
+pnorm(3.090232, mean=0, sd=1, lower.tail = TRUE)
+```
+
