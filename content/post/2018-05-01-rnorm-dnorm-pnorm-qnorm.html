@@ -16,7 +16,7 @@ tags:
 <p>Let’s start by <code>dnorm</code> and <code>rnorm</code></p>
 <div id="dnorm" class="section level2">
 <h2>dnorm</h2>
-<p>This <code>dnorm(x, mean = 0, sd = 1, log = FALSE)</code> function simply calculates the result for the value plugged into the probability density distribution.</p>
+<p>This <code>dnorm(x, mean = 0, sd = 1, log = FALSE)</code> function simply calculates the result for the value plugged into the probability density distribution or probability mass function.</p>
 <p>So for the normal distribution with <span class="math inline">\(mean=0, sd=1\)</span>, we have</p>
 <p><span class="math display">\[
 \frac{1}{\sqrt{2\pi}}e^{\frac{-x^2}{2}}
@@ -33,33 +33,33 @@ tags:
 <p><code>rnorm(n, mean = 0, sd = 1)</code> returns <em>n</em> random values that belong to the normal distribution with a <span class="math inline">\(mean=0\)</span> and <span class="math inline">\(sd=1\)</span>.</p>
 <p>For example, for <span class="math inline">\(N(0,1)\)</span>, if we generate 100 values from it. It is very unlikely that we will get a value of 10000. In fact, we are able to get the probability of having a value of 10000 from this <span class="math inline">\(N(0,1)\)</span> distribution by using <code>pnorm</code>. Mostly we will have some values are not far from 0 depending on the standard deviation. The mean and sd we got from the randomly generately values will get close to the theoretical value as <em>n</em> gets larger. <a href="https://en.wikipedia.org/wiki/Law_of_large_numbers">Law of large numbers</a></p>
 <pre class="r"><code>rnorm(100, mean = 0, sd = 1)</code></pre>
-<pre><code>##   [1]  0.68691959  1.43690843  0.70479364 -0.87698043 -0.55833706
-##   [6] -0.14415754  1.16357825 -0.78517169  0.22572501  0.37579383
-##  [11]  0.72842546  1.03149772  0.12336830  1.51023176  0.91958382
-##  [16]  0.47599951 -0.02030236 -0.35230087 -0.10687841 -1.32780979
-##  [21] -1.07600363  0.59125210  1.35634088  0.69392307 -0.31626096
-##  [26] -0.49247174  0.19378650  1.06969915  0.04410681 -0.35083014
-##  [31]  2.15622359  0.49422628 -0.25775835  0.79639206  0.76428423
-##  [36] -1.24167510  1.95444199 -0.23721087  1.50664724  0.22160180
-##  [41] -0.53008508 -0.54727652  0.25971077 -0.81693605  1.42099370
-##  [46]  1.15560058 -1.11201736  1.42423306  1.87934981  0.05366270
-##  [51]  0.39605745  0.42666838 -0.68812868 -0.80140430 -1.24350111
-##  [56]  0.47241335 -1.03157533  0.64683562  0.20227059 -0.06824106
-##  [61]  0.07479738 -1.01225151 -1.21666787 -1.70370898 -0.50706527
-##  [66] -0.40019635 -0.46623168 -0.71159498 -0.98356747 -1.21097734
-##  [71]  0.04702062 -0.51593302 -1.31239143 -0.15028301 -0.98321962
-##  [76] -0.58241216  1.28209556 -0.41797219 -0.84696299 -0.49316312
-##  [81] -0.46997159 -0.55363990 -0.63283791 -1.49136528  0.12813817
-##  [86] -0.22630617  0.86170772  0.02007570 -0.56599628 -0.90925735
-##  [91] -1.74347326  0.82656646  0.41768364 -0.09815983 -1.27426982
-##  [96]  0.37725091  0.91369184 -2.70724560  1.66228497  1.13435609</code></pre>
+<pre><code>##   [1]  0.335648113 -0.153505119  0.408447454  0.716729071 -0.053926199
+##   [6]  0.067159184 -0.082480134  1.780189438  0.250152113  0.135192936
+##  [11]  0.135565461 -0.434420754  0.955334536  0.767021474 -0.196515931
+##  [16] -0.037003530  2.017407537  0.737195997 -0.689337431 -0.787634126
+##  [21]  0.984648801  0.537196460  1.089146335  0.775746157 -0.714335670
+##  [26]  1.588113722 -1.400430128 -2.182787555 -0.453211897 -0.297690715
+##  [31]  0.454053386 -1.452180074 -1.742583940 -2.029467227  0.009054999
+##  [36]  0.133722642 -0.403872135  1.765107369  0.606788444 -1.732746837
+##  [41]  0.644391221  0.490256464 -1.444210755 -1.762861862 -0.693085232
+##  [46]  0.520476476 -0.461759135 -1.374702782  0.532000140  0.960651017
+##  [51] -0.559965688  1.072138284  0.483093236  0.467517581  1.217305198
+##  [56] -0.853428584 -2.776676146 -0.454552960 -0.766351304 -1.347852260
+##  [61]  1.672300872  1.017597802 -0.101543273 -0.246543274  0.008529457
+##  [66]  0.156341725 -0.682222950 -0.163159053 -0.271496626 -1.448706872
+##  [71] -0.854699955 -1.030245796 -0.846206373  0.072932738  0.957261412
+##  [76] -0.419484940  0.492302769  0.172006346  0.581489914  0.341530433
+##  [81]  0.610827319  0.269962341 -0.027250559  0.133058832 -0.252735298
+##  [86]  1.571362902 -0.160575284 -0.972118077 -1.381503514  0.665358681
+##  [91] -0.456817097  0.858955995 -0.757360504  1.102842643 -1.611833710
+##  [96] -0.620403669  0.140690330 -0.177913177  0.850946900  0.756033051</code></pre>
 <pre class="r"><code>mean(rnorm(100, mean = 0, sd = 1))</code></pre>
-<pre><code>## [1] -0.1186238</code></pre>
+<pre><code>## [1] -0.03420898</code></pre>
 </div>
 <div id="pnorm" class="section level2">
 <h2>pnorm</h2>
 <p><code>pnorm(q, mean = 0, sd = 1, lower.tail = TRUE, log.p = FALSE)</code> returns the probabality of <span class="math inline">\(p(X&lt;=x)\)</span> by default. If we set <code>low.tail = FALSE</code>, then it returns <span class="math inline">\(p(X&gt;x)=1-p(X&lt;=x)\)</span>.</p>
-<p>Let’s look at an extreme example which is the one I mentioned above. What is the probability that <span class="math inline">\(p(X&lt;10000)\)</span> for <span class="math inline">\(N(0,1)\)</span>. It is almost certainly that it should be 1. In another word, <span class="math inline">\(p(x&lt;10000)\)</span> is 0. You can imagine the chance of having a human being whose height is 40m(<a href="https://en.wikipedia.org/wiki/Ultraman">ultraman</a>).</p>
+<p>Let’s look at an extreme example which is the one I mentioned above. What is the probability that <span class="math inline">\(p(X&lt;10000)\)</span> for <span class="math inline">\(N(0,1)\)</span>. It is almost certainly that it should be 1. In another word, <span class="math inline">\(p(x&gt;10000)\)</span> is 0. You can imagine the chance of having a human being whose height is 40m(<a href="https://en.wikipedia.org/wiki/Ultraman">ultraman</a>).</p>
 <p>It is important to remember the function returns probability.</p>
 <pre class="r"><code>pnorm(0, mean = 0, sd = 1)</code></pre>
 <pre><code>## [1] 0.5</code></pre>

@@ -16,7 +16,7 @@ Let's start by <code>dnorm</code> and <code>rnorm</code>
 
 ##dnorm
 
-This <code>dnorm(x, mean = 0, sd = 1, log = FALSE)</code> function simply calculates the result for the value plugged into the probability density distribution.
+This <code>dnorm(x, mean = 0, sd = 1, log = FALSE)</code> function simply calculates the result for the value plugged into the probability density distribution or probability mass function.
 
 So for the normal distribution with \(mean=0, sd=1\), we have
 
@@ -51,7 +51,7 @@ mean(rnorm(100, mean = 0, sd = 1))
 
 <code>pnorm(q, mean = 0, sd = 1, lower.tail = TRUE, log.p = FALSE)</code> returns the probabality of \(p(X<=x)\) by default. If we set <code>low.tail = FALSE</code>, then it returns \(p(X>x)=1-p(X<=x)\).
 
-Let's look at an extreme example which is the one I mentioned above. What is the probability that \(p(X<10000)\) for \(N(0,1)\). It is almost certainly that it should be 1. In another word, \(p(x<10000)\) is 0. You can imagine the chance of having a human being whose height is 40m([ultraman](https://en.wikipedia.org/wiki/Ultraman)).
+Let's look at an extreme example which is the one I mentioned above. What is the probability that \(p(X<10000)\) for \(N(0,1)\). It is almost certainly that it should be 1. In another word, \(p(x>10000)\) is 0. You can imagine the chance of having a human being whose height is 40m([ultraman](https://en.wikipedia.org/wiki/Ultraman)).
 
 It is important to remember the function returns probability.
 ```{r}
