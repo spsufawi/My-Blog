@@ -16,7 +16,7 @@ tags:
 <p>Let’s start by <code>dnorm</code> and <code>rnorm</code></p>
 <div id="dnorm" class="section level2">
 <h2>dnorm</h2>
-<p>This <code>dnorm(x, mean = 0, sd = 1, log = FALSE)</code> function simply calculates the result for the value plugged into the probability density distribution or probability mass function.</p>
+<p>This <code>dnorm(x, mean = 0, sd = 1, log = FALSE)</code> function simply calculates the result for the value plugged into the probability density distribution or probability mass function if it is a discrete distribution.</p>
 <p>So for the normal distribution with <span class="math inline">\(mean=0, sd=1\)</span>, we have</p>
 <p><span class="math display">\[
 \frac{1}{\sqrt{2\pi}}e^{\frac{-x^2}{2}}
@@ -33,28 +33,28 @@ tags:
 <p><code>rnorm(n, mean = 0, sd = 1)</code> returns <em>n</em> random values that belong to the normal distribution with a <span class="math inline">\(mean=0\)</span> and <span class="math inline">\(sd=1\)</span>.</p>
 <p>For example, for <span class="math inline">\(N(0,1)\)</span>, if we generate 100 values from it. It is very unlikely that we will get a value of 10000. In fact, we are able to get the probability of having a value of 10000 from this <span class="math inline">\(N(0,1)\)</span> distribution by using <code>pnorm</code>. Mostly we will have some values are not far from 0 depending on the standard deviation. The mean and sd we got from the randomly generately values will get close to the theoretical value as <em>n</em> gets larger. <a href="https://en.wikipedia.org/wiki/Law_of_large_numbers">Law of large numbers</a></p>
 <pre class="r"><code>rnorm(100, mean = 0, sd = 1)</code></pre>
-<pre><code>##   [1]  0.335648113 -0.153505119  0.408447454  0.716729071 -0.053926199
-##   [6]  0.067159184 -0.082480134  1.780189438  0.250152113  0.135192936
-##  [11]  0.135565461 -0.434420754  0.955334536  0.767021474 -0.196515931
-##  [16] -0.037003530  2.017407537  0.737195997 -0.689337431 -0.787634126
-##  [21]  0.984648801  0.537196460  1.089146335  0.775746157 -0.714335670
-##  [26]  1.588113722 -1.400430128 -2.182787555 -0.453211897 -0.297690715
-##  [31]  0.454053386 -1.452180074 -1.742583940 -2.029467227  0.009054999
-##  [36]  0.133722642 -0.403872135  1.765107369  0.606788444 -1.732746837
-##  [41]  0.644391221  0.490256464 -1.444210755 -1.762861862 -0.693085232
-##  [46]  0.520476476 -0.461759135 -1.374702782  0.532000140  0.960651017
-##  [51] -0.559965688  1.072138284  0.483093236  0.467517581  1.217305198
-##  [56] -0.853428584 -2.776676146 -0.454552960 -0.766351304 -1.347852260
-##  [61]  1.672300872  1.017597802 -0.101543273 -0.246543274  0.008529457
-##  [66]  0.156341725 -0.682222950 -0.163159053 -0.271496626 -1.448706872
-##  [71] -0.854699955 -1.030245796 -0.846206373  0.072932738  0.957261412
-##  [76] -0.419484940  0.492302769  0.172006346  0.581489914  0.341530433
-##  [81]  0.610827319  0.269962341 -0.027250559  0.133058832 -0.252735298
-##  [86]  1.571362902 -0.160575284 -0.972118077 -1.381503514  0.665358681
-##  [91] -0.456817097  0.858955995 -0.757360504  1.102842643 -1.611833710
-##  [96] -0.620403669  0.140690330 -0.177913177  0.850946900  0.756033051</code></pre>
+<pre><code>##   [1]  0.44397253  2.26974278  0.96213017 -0.98114321 -0.81673697
+##   [6] -1.27911926  0.43560479  0.63864735  0.70865044  1.91058328
+##  [11] -0.79346382 -0.74380923  0.19057270 -1.91290216  0.65753297
+##  [16]  0.64780687  0.85601248  0.42054690  1.59931574  1.85609449
+##  [21]  0.92548581 -0.63423536  0.40053807  1.11895633  0.86968372
+##  [26] -0.88021520  0.69891915 -1.13410683  0.42440412 -1.54164780
+##  [31] -1.41371545 -0.77129951  0.58247868 -0.60981978  1.61671347
+##  [36] -0.19234311 -0.43230939 -1.69311707  1.28331089 -0.43960770
+##  [41] -1.26880188 -1.03024181 -0.09301054  0.09630727  0.09567935
+##  [46] -0.95457462  0.15968128  1.59552431  0.70149448  0.59702470
+##  [51] -0.79018483 -0.46857261  1.33755335 -0.99504568  0.05257650
+##  [56] -1.56017586 -1.09044670  3.44503337 -0.67710208 -0.65193628
+##  [61]  0.51748999 -0.64310700 -0.98015442  2.08505345 -0.03036714
+##  [66] -0.74714762 -0.56065081  1.69428481  0.87185800 -0.24940924
+##  [71]  2.89343687 -1.29225632 -0.07762765  0.78040052  0.54147203
+##  [76]  0.77056421  1.56432169  3.31402743  0.01087223 -0.54794083
+##  [81]  1.23263952  0.88385819 -0.05748334  0.80355828  1.25799155
+##  [86] -1.75506811 -0.35114983 -1.24856268  0.58143097 -0.16829024
+##  [91]  0.19160874  1.31997751  0.77578134  2.62336213 -0.22477977
+##  [96]  1.61008297 -1.08468341 -2.25972128  1.11632542 -1.15402003</code></pre>
 <pre class="r"><code>mean(rnorm(100, mean = 0, sd = 1))</code></pre>
-<pre><code>## [1] -0.03420898</code></pre>
+<pre><code>## [1] 0.001469718</code></pre>
 </div>
 <div id="pnorm" class="section level2">
 <h2>pnorm</h2>

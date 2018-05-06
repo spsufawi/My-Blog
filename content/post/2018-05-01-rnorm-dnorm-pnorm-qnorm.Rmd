@@ -16,7 +16,7 @@ Let's start by <code>dnorm</code> and <code>rnorm</code>
 
 ##dnorm
 
-This <code>dnorm(x, mean = 0, sd = 1, log = FALSE)</code> function simply calculates the result for the value plugged into the probability density distribution or probability mass function.
+This <code>dnorm(x, mean = 0, sd = 1, log = FALSE)</code> function simply calculates the result for the value plugged into the probability density distribution or probability mass function if it is a discrete distribution.
 
 So for the normal distribution with \(mean=0, sd=1\), we have
 
