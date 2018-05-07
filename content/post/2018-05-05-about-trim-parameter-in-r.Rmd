@@ -1,0 +1,77 @@
+---
+title: About trim parameter in R
+author: Xinchen Pan
+date: '2018-05-05'
+slug: about-trim-parameter-in-r
+categories:
+  - Statistics
+tags:
+  - R
+---
+
+Not sure how many of you know there is a <code>trim</code> parameter in <code>mean</code> function. Also not sure how many people understand its meaning of it among the people who know its existence. And how many people actually used it before.  After slicing the pie  three times, I believe the percentage is quite low. Let's look this <code>trim</code> parameter now. 
+
+<pre>
+mean(x, trim = 0, na.rm = FALSE, ...)
+
+<strong>Arguments</strong>
+
+<strong>x</strong>	An R object. Currently there are methods for numeric/logical vectors and date, 
+date-time and time interval objects. Complex vectors are allowed for trim = 0, only.
+
+<strong>trim</strong>	the fraction (0 to 0.5) of observations to be trimmed from each end of x 
+before the mean is computed. Values of trim outside that range are taken as the 
+nearest endpoint.
+
+<strong>na.rm</strong>	a logical value indicating whether NA values should be stripped before the 
+computation proceeds.
+
+</strong>...</strong>	further arguments passed to or from other methods.
+</pre>
+
+I have to admit I did not under the meaning of it after read the descriptions three times. I finally knew how it works about one month ago and that was the time I had the idea to write this post. Now I forgot how to use it again. After I finished typing last sentence, I recalled it. 
+
+First notice that the fraction needs to be within (0, 0.5). This guarantees that we are not removing all of the numbers. I was confused by the description because I thought we are going to trim the fraction of only the first and the last observation. But we are trimming a fraction of all observations from the start and the end.
+
+It works like this:
+
+Suppose we have \(n\) numbers. We set the trimmed fraction as \(\alpha\). Then we multiply \(n\) and \(\alpha\). We round \(\alpha n\) to its nearest point and get a number of \(c\). Then we calculate the mean by removing \(c\) numbers of observations from each end.
+
+
+Let's try some examples. The example below is the one in the documentation. 
+
+
+```{r}
+x <- c(0:10, 50)
+```
+
+We have 12 observations. If we set <code>trim = 0.1</code>, we will get a number of 1.2. Then we are going to remove 1 observation from each end which are 0 and 50. What is the mean now?
+```{r}
+mean(1:10)
+```
+
+
+```{r}
+mean(x, trim = 0.10)
+```
+
+Look at another example.
+
+```{r}
+x <- c(0:10, 50)
+```
+
+We are still using the same numbers, but this time set <code>trim = 0.4</code>. Then we are going to remove \(4.8\approx5\) observations. Thus 
+```{r}
+mean(5)
+```
+
+```{r}
+mean(0:10, 50, trim = 0.4)
+```
+
+It is really easy to understand and it might not be a problem for most people to understand it. But I do believe some people will be confused just like me.
+
+The statistical concept behind is we want to eliminate the influence of the data points on each tail which might affect the mean.
+
+Check: [Trimmed Mean](https://www.investopedia.com/terms/t/trimmed_mean.asp)
