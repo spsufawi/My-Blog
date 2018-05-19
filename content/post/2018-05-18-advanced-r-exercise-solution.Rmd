@@ -1,0 +1,84 @@
+---
+title: Advanced R Exercise Solution (1)
+author: Xinchen Pan
+date: '2018-05-18'
+slug: advanced-r-exercise-solution
+categories:
+  - R
+tags:
+  - R
+---
+
+I am reading the [advanced R](http://adv-r.had.co.nz/) written by Hadley Wickham recently. I want also do the exercise this time. Not sure if I can finish all of them. Let's see.
+
+##Data Structures
+
+1. What attributes does a data frame possess?
+
+We can use <code>attributes()</code> to find out the attributes of data frame.
+
+```{r}
+names(attributes(data.frame(x = 1:3, y = c("a", "b", "c"))))
+```
+
+2. What does <code>as.matrix()</code> do when applied to a data frame with columns of different types?
+
+The numeric values will be coerced to characters.
+
+```{r}
+str(as.matrix(data.frame(x = 1:3, y = c("a", "b", "c"))))
+```
+
+
+If the data frame contain both logical values and numeric value, the logical values will be coerced to numeric values. 
+
+```{r}
+as.matrix(data.frame(x = c(T, T, F), y = c(1, 2, 3)))
+```
+
+
+3. Can you have a data frame with 0 rows? What about 0 columns?
+
+Yes.
+```{r}
+data.frame(x = character(), y = numeric())
+
+```
+
+
+##Subsetting
+
+1. How would you randomly permute the columns of a data frame? (This is an important technique in random forests.) Can you simultaneously permute the rows and columns in one step?
+
+```{r}
+dt <- data.frame("X1" = c(rep(1, 5)), "X2" = c(rep(2, 5)), "X3" = c(rep(3, 5)))
+dt
+
+dt[ ,sample(ncol(dt))]
+```
+
+
+2. How would you select a random sample of m rows from a data frame? What if the sample had to be contiguous (i.e., with an initial row, a final row, and every row in between)?
+
+```{r}
+dt <- data.frame("X1" = 1:10, "X2" = 1:10, "X3" = 1:10)
+dt
+sample_contiguous <- function(m){
+  samples <- sample(nrow(dt) - m + 1, 1)
+  dt[samples :(samples + m - 1), ]
+}
+
+sample_contiguous(7)
+```
+
+3. How could you put the columns in a data frame in alphabetical order?
+
+```{r}
+dt <- data.frame("dog" = 1:5, "cat" = 1:5, "apple" = 1:5)
+dt
+dt[, sort(names(dt))]
+##which is equivalent to 
+dt[, order(names(dt))]
+```
+
+
