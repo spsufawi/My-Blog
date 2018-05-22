@@ -14,15 +14,141 @@ tags:
 <p>I am reading the <a href="http://adv-r.had.co.nz/">advanced R</a> written by Hadley Wickham recently. I want also do the exercise this time. Not sure if I can finish all of them. Let’s see.</p>
 <div id="data-structures" class="section level2">
 <h2>Data Structures</h2>
+<div id="vectors" class="section level3">
+<h3>Vectors</h3>
+<ol style="list-style-type: decimal">
+<li>What are the six types of atomic vector? How does a list differ from an atomic vector?</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<p>logical, integer, double, character, complex and raw.</p>
+<pre class="r"><code>sapply(list(3L, 3, TRUE, &quot;Time&quot;, 3i, raw(2)), typeof)</code></pre>
+<pre><code>## [1] &quot;integer&quot;   &quot;double&quot;    &quot;logical&quot;   &quot;character&quot; &quot;complex&quot;   &quot;raw&quot;</code></pre>
+<p>Lists are different from atomic vectors because their elements can be of any type, including lists.</p>
+<ol start="2" style="list-style-type: decimal">
+<li>What makes <code>is.vector()</code> and <code>is.numeric()</code> fundamentally different to <code> is.list()</code> and <code>is.character()</code>?</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<p><code>is.vector()</code> does not test if an object is a vector. Instead it returns TRUE only if the object is a vector with no attributes apart from names. <code>is.numeric()</code> is a general test for the “numberliness” of a vector and returns TRUE for both integer and double vectors. It is not a specific test for double vectors, which are often called numeric.</p>
+<p>Lists are sometimes called recursive vectors, because a list can contain other lists. This makes them fundamentally different from atomic vectors.</p>
+<ol start="3" style="list-style-type: decimal">
+<li>Test your knowledge of vector coercion rules by predicting the output of the following uses of <code>c()</code>:</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<pre class="r"><code>c(1, FALSE) == c(1, 0)</code></pre>
+<pre><code>## [1] TRUE TRUE</code></pre>
+<pre class="r"><code>c(&quot;a&quot;, 1) == c(&quot;a&quot;, &quot;1&quot;)</code></pre>
+<pre><code>## [1] TRUE TRUE</code></pre>
+<pre class="r"><code>all.equal(c(list(1), &quot;a&quot;), c(list(1), list(&quot;a&quot;)))</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>c(TRUE, 1L) == c(1, 1)</code></pre>
+<pre><code>## [1] TRUE TRUE</code></pre>
+<ol start="4" style="list-style-type: decimal">
+<li>Why do you need to use <code>unlist()</code> to convert a list to an atomic vector? Why doesn’t <code>as.vector()</code> work?</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<p>The elements in lists can be heterogeneous. So in order to convert a list to an atomic vector, it has to be unlisted first before the values can be coerced.</p>
+<ol start="5" style="list-style-type: decimal">
+<li>Why is <code>1 == “1”</code> true? Why is <code>-1 &lt; FALSE</code> true? Why is <code>“one” &lt; 2</code> false?</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<p>“one” cannot be recognized as 1 in R. The other two are because of the coercion rules.</p>
+<ol start="6" style="list-style-type: decimal">
+<li>Why is the default missing value, <code>NA</code>, a logical vector? What’s special about logical vectors? (Hint: think about <code>c(FALSE, NA_character_</code>).)</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<p>Since <code>NA</code> is a logical constant of length 1 which contains a missing value indicator. If we saw a NA, it means that <code>is.na(x)</code> already equals to TRUE.</p>
+<p>NA will always be coerced to the correct type if used inside c() because logical vector is in the lowest hierarchy of the coercion rule.</p>
+</div>
+<div id="attributes" class="section level3">
+<h3>Attributes</h3>
+<ol style="list-style-type: decimal">
+<li>An early draft used this code to illustrate <code>structure()</code>:</li>
+</ol>
+<pre class="r"><code>structure(1:5, comment = &quot;my attribute&quot;)</code></pre>
+<pre><code>## [1] 1 2 3 4 5</code></pre>
+<p><strong>Answer:</strong></p>
+<p>From the help page,we see that</p>
+<pre>
+comment {base}  R Documentation
+Query or Set a "comment" Attribute
+
+Description
+
+These functions set and query a comment attribute for any R objects. This is typically 
+useful for data.frames or model fits.
+
+Contrary to other attributes, the comment is not printed (by print or print.default).
+
+Assigning NULL or a zero-length character vector removes the comment.
+
+</pre>
+<ol start="2" style="list-style-type: decimal">
+<li>What happens to a factor when you modify its levels?</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<pre class="r"><code>f1 &lt;- factor(letters)
+levels(f1) &lt;- rev(levels(f1))
+f1</code></pre>
+<pre><code>##  [1] z y x w v u t s r q p o n m l k j i h g f e d c b a
+## Levels: z y x w v u t s r q p o n m l k j i h g f e d c b a</code></pre>
+<p>The order of the factors itself will also change.</p>
+<ol start="3" style="list-style-type: decimal">
+<li>What does this code do? How do f2 and f3 differ from f1?</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<pre class="r"><code>f2 &lt;- rev(factor(letters))
+f3 &lt;- factor(letters, levels = rev(letters))
+f2</code></pre>
+<pre><code>##  [1] z y x w v u t s r q p o n m l k j i h g f e d c b a
+## Levels: a b c d e f g h i j k l m n o p q r s t u v w x y z</code></pre>
+<pre class="r"><code>f3</code></pre>
+<pre><code>##  [1] a b c d e f g h i j k l m n o p q r s t u v w x y z
+## Levels: z y x w v u t s r q p o n m l k j i h g f e d c b a</code></pre>
+<p>The first line of code reversed the order of the factors but does not change the levels. The second line changes the order of the levels but do not reverse the order of the factors.</p>
+</div>
+<div id="matrices-and-arrays" class="section level3">
+<h3>Matrices and arrays</h3>
+<ol style="list-style-type: decimal">
+<li>What does <code>dim()</code> return when applied to a vector?</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<pre class="r"><code>dim(1:4)</code></pre>
+<pre><code>## NULL</code></pre>
+<ol start="2" style="list-style-type: decimal">
+<li>If <code>is.matrix(x)</code> is TRUE, what will <code>is.array(x)</code> return?</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<pre class="r"><code>is.matrix(matrix(1:9, nrow = 3))</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>is.array(matrix(1:9, nrow = 3))</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<ol start="3" style="list-style-type: decimal">
+<li>How would you describe the following three objects? What makes them different to 1:5?</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<pre class="r"><code>x1 &lt;- array(1:5, c(1, 1, 5))
+x2 &lt;- array(1:5, c(1, 5, 1))
+x3 &lt;- array(1:5, c(5, 1, 1))</code></pre>
+<p>x1 is to make five <span class="math inline">\(1\times 1\)</span> matrix. x2 is to make one <span class="math inline">\(1\times 5\)</span> matrix x3 is to make one <span class="math inline">\(5\times 1\)</span> matrix</p>
+<p>dimension?</p>
+<pre class="r"><code>dim(x1)</code></pre>
+<pre><code>## [1] 1 1 5</code></pre>
+<pre class="r"><code>dim(1:5)</code></pre>
+<pre><code>## NULL</code></pre>
+</div>
+<div id="data-frame" class="section level3">
+<h3>Data Frame</h3>
 <ol style="list-style-type: decimal">
 <li>What attributes does a data frame possess?</li>
 </ol>
+<p><strong>Answer:</strong></p>
 <p>We can use <code>attributes()</code> to find out the attributes of data frame.</p>
 <pre class="r"><code>names(attributes(data.frame(x = 1:3, y = c(&quot;a&quot;, &quot;b&quot;, &quot;c&quot;))))</code></pre>
 <pre><code>## [1] &quot;names&quot;     &quot;class&quot;     &quot;row.names&quot;</code></pre>
 <ol start="2" style="list-style-type: decimal">
 <li>What does <code>as.matrix()</code> do when applied to a data frame with columns of different types?</li>
 </ol>
+<p><strong>Answer:</strong></p>
 <p>The numeric values will be coerced to characters.</p>
 <pre class="r"><code>str(as.matrix(data.frame(x = 1:3, y = c(&quot;a&quot;, &quot;b&quot;, &quot;c&quot;))))</code></pre>
 <pre><code>##  chr [1:3, 1:2] &quot;1&quot; &quot;2&quot; &quot;3&quot; &quot;a&quot; &quot;b&quot; &quot;c&quot;
@@ -38,16 +164,120 @@ tags:
 <ol start="3" style="list-style-type: decimal">
 <li>Can you have a data frame with 0 rows? What about 0 columns?</li>
 </ol>
+<p><strong>Answer:</strong></p>
 <p>Yes.</p>
 <pre class="r"><code>data.frame(x = character(), y = numeric())</code></pre>
 <pre><code>## [1] x y
 ## &lt;0 rows&gt; (or 0-length row.names)</code></pre>
 </div>
+</div>
 <div id="subsetting" class="section level2">
 <h2>Subsetting</h2>
+<div id="data-types" class="section level3">
+<h3>Data Types</h3>
+<ol style="list-style-type: decimal">
+<li>Fix each of the following common data frame subsetting errors:</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<pre class="r"><code>mtcars[mtcars$cyl = 4, ]
+mtcars[-1:4, ]
+mtcars[mtcars$cyl &lt;= 5]
+mtcars[mtcars$cyl == 4 | 6, ]
+
+##Corrected 
+mtcars[mtcars$cyl == 4, ]
+mtcars[1:4, ]
+mtcars[mtcars$cyl &lt;=5, ]
+mtcars[mtcars$cyl %in% c(4, 6), ]</code></pre>
+<ol start="2" style="list-style-type: decimal">
+<li>Why does <code>x &lt;- 1:5</code>; <code>x[NA]</code> yield five missing values? (Hint: why is it different from <code>x[NA_real_]</code>?)</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<pre class="r"><code>x &lt;- 1:5
+x[NA]</code></pre>
+<pre><code>## [1] NA NA NA NA NA</code></pre>
+<p>Since <code>NA</code> is a logical value so it looks for every element in the vector. <code>NA_real_</code> we can consider it as just like one value. ??</p>
+<ol start="3" style="list-style-type: decimal">
+<li></li>
+</ol>
+<p>What does <code>upper.tri()</code> return? How does subsetting a matrix with it work? Do we need any additional subsetting rules to describe its behaviour?</p>
+<p><strong>Answer:</strong></p>
+<p>It returns a matrix of logicals the same size of a given matrix with entries TRUE in the lower or upper triangle.</p>
+<pre class="r"><code>x &lt;- outer(1:5, 1:5, FUN = &quot;*&quot;)
+upper.tri(x)</code></pre>
+<pre><code>##       [,1]  [,2]  [,3]  [,4]  [,5]
+## [1,] FALSE  TRUE  TRUE  TRUE  TRUE
+## [2,] FALSE FALSE  TRUE  TRUE  TRUE
+## [3,] FALSE FALSE FALSE  TRUE  TRUE
+## [4,] FALSE FALSE FALSE FALSE  TRUE
+## [5,] FALSE FALSE FALSE FALSE FALSE</code></pre>
+<pre class="r"><code>x[upper.tri(x)]</code></pre>
+<pre><code>##  [1]  2  3  6  4  8 12  5 10 15 20</code></pre>
+<p>We can not keep preserve the data structures of the matrix if we are not subsetting a complete row or column.</p>
+<ol start="4" style="list-style-type: decimal">
+<li>Why does <code>mtcars[1:20]</code> return an error? How does it differ from the similar <code>mtcars[1:20, ]</code>?</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<p>Since there are only 11 columns in <code>mtcars</code>. <code>mtcars[1:20]</code> subsets on columns. <code>mtcars[1:20, ]</code> subsets on rows.</p>
+<ol start="5" style="list-style-type: decimal">
+<li>Implement your own function that extracts the diagonal entries from a matrix (it should behave like <code>diag(x)</code> where x is a matrix).</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<pre class="r"><code>diagnoal &lt;- function(matrix){
+  dims &lt;- dim(matrix)
+  i = 1
+  result &lt;- c()
+  while(i**2 &lt;= dims[1]**2){
+    result &lt;- c(result, matrix[i, i])
+    i = i + 1
+  }
+  result
+}
+
+diagnoal(matrix(letters[1:16],nrow=4))</code></pre>
+<pre><code>## [1] &quot;a&quot; &quot;f&quot; &quot;k&quot; &quot;p&quot;</code></pre>
+<pre class="r"><code>diag(matrix(letters[1:16],nrow=4))</code></pre>
+<pre><code>## [1] &quot;a&quot; &quot;f&quot; &quot;k&quot; &quot;p&quot;</code></pre>
+<ol start="6" style="list-style-type: decimal">
+<li>What does <code>df[is.na(df)] &lt;- 0</code> do? How does it work?</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<p>It replaces all <code>NA</code> with 0.</p>
+<pre class="r"><code>df &lt;- data.frame(&quot;a&quot; = c(1,2, NA, NA), &quot;a&quot; = c(NA, NA, 1,2))
+is.na(df)</code></pre>
+<pre><code>##          a   a.1
+## [1,] FALSE  TRUE
+## [2,] FALSE  TRUE
+## [3,]  TRUE FALSE
+## [4,]  TRUE FALSE</code></pre>
+<pre class="r"><code>df[is.na(df)] </code></pre>
+<pre><code>## [1] NA NA NA NA</code></pre>
+<pre class="r"><code>df[is.na(df)] &lt;- 0
+df</code></pre>
+<pre><code>##   a a.1
+## 1 1   0
+## 2 2   0
+## 3 0   1
+## 4 0   2</code></pre>
+</div>
+<div id="subsetting-operators" class="section level3">
+<h3>Subsetting operators</h3>
+<ol style="list-style-type: decimal">
+<li>Given a linear model, e.g., <code>mod &lt;- lm(mpg ~ wt, data = mtcars)</code>, extract the residual degrees of freedom. Extract the R squared from the model summary (<code>summary(mod)</code>)</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<pre class="r"><code>mod &lt;- lm(mpg ~ wt, data = mtcars)
+mod$df.residual</code></pre>
+<pre><code>## [1] 30</code></pre>
+<pre class="r"><code>summary(mod)$r.squared</code></pre>
+<pre><code>## [1] 0.7528328</code></pre>
+</div>
+<div id="subsetting-and-assignment" class="section level3">
+<h3>Subsetting and assignment</h3>
 <ol style="list-style-type: decimal">
 <li>How would you randomly permute the columns of a data frame? (This is an important technique in random forests.) Can you simultaneously permute the rows and columns in one step?</li>
 </ol>
+<p><strong>Answer:</strong></p>
 <pre class="r"><code>dt &lt;- data.frame(&quot;X1&quot; = c(rep(1, 5)), &quot;X2&quot; = c(rep(2, 5)), &quot;X3&quot; = c(rep(3, 5)))
 dt</code></pre>
 <pre><code>##   X1 X2 X3
@@ -57,15 +287,16 @@ dt</code></pre>
 ## 4  1  2  3
 ## 5  1  2  3</code></pre>
 <pre class="r"><code>dt[ ,sample(ncol(dt))]</code></pre>
-<pre><code>##   X2 X1 X3
-## 1  2  1  3
-## 2  2  1  3
-## 3  2  1  3
-## 4  2  1  3
-## 5  2  1  3</code></pre>
+<pre><code>##   X2 X3 X1
+## 1  2  3  1
+## 2  2  3  1
+## 3  2  3  1
+## 4  2  3  1
+## 5  2  3  1</code></pre>
 <ol start="2" style="list-style-type: decimal">
 <li>How would you select a random sample of m rows from a data frame? What if the sample had to be contiguous (i.e., with an initial row, a final row, and every row in between)?</li>
 </ol>
+<p><strong>Answer:</strong></p>
 <pre class="r"><code>dt &lt;- data.frame(&quot;X1&quot; = 1:10, &quot;X2&quot; = 1:10, &quot;X3&quot; = 1:10)
 dt</code></pre>
 <pre><code>##    X1 X2 X3
@@ -86,16 +317,17 @@ dt</code></pre>
 
 sample_contiguous(7)</code></pre>
 <pre><code>##   X1 X2 X3
-## 1  1  1  1
 ## 2  2  2  2
 ## 3  3  3  3
 ## 4  4  4  4
 ## 5  5  5  5
 ## 6  6  6  6
-## 7  7  7  7</code></pre>
+## 7  7  7  7
+## 8  8  8  8</code></pre>
 <ol start="3" style="list-style-type: decimal">
 <li>How could you put the columns in a data frame in alphabetical order?</li>
 </ol>
+<p><strong>Answer:</strong></p>
 <pre class="r"><code>dt &lt;- data.frame(&quot;dog&quot; = 1:5, &quot;cat&quot; = 1:5, &quot;apple&quot; = 1:5)
 dt</code></pre>
 <pre><code>##   dog cat apple
@@ -119,4 +351,32 @@ dt[, order(names(dt))]</code></pre>
 ## 3     3   3   3
 ## 4     4   4   4
 ## 5     5   5   5</code></pre>
+<ol start="3" style="list-style-type: decimal">
+<li>How could you put the columns in a data frame in alphabetical order?</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<pre class="r"><code>dt &lt;- data.frame(&quot;dog&quot; = 1:5, &quot;cat&quot; = 1:5, &quot;apple&quot; = 1:5)
+dt</code></pre>
+<pre><code>##   dog cat apple
+## 1   1   1     1
+## 2   2   2     2
+## 3   3   3     3
+## 4   4   4     4
+## 5   5   5     5</code></pre>
+<pre class="r"><code>dt[, sort(names(dt))]</code></pre>
+<pre><code>##   apple cat dog
+## 1     1   1   1
+## 2     2   2   2
+## 3     3   3   3
+## 4     4   4   4
+## 5     5   5   5</code></pre>
+<pre class="r"><code>##which is equivalent to 
+dt[, order(names(dt))]</code></pre>
+<pre><code>##   apple cat dog
+## 1     1   1   1
+## 2     2   2   2
+## 3     3   3   3
+## 4     4   4   4
+## 5     5   5   5</code></pre>
+</div>
 </div>
