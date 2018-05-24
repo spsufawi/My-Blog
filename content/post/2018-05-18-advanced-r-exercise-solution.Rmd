@@ -355,17 +355,3 @@ dt[, order(names(dt))]
 
 
 
-
-3. How could you put the columns in a data frame in alphabetical order?
-
-<strong>Answer:</strong>
-
-```{r}
-dt <- data.frame("dog" = 1:5, "cat" = 1:5, "apple" = 1:5)
-dt
-dt[, sort(names(dt))]
-##which is equivalent to 
-dt[, order(names(dt))]
-```
-
-
