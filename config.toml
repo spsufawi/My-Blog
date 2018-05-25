@@ -7,7 +7,7 @@ languagecode = "en"
 theme = "hugo-tanka"
 
 enableEmoji = true
-googleAnalytics = ""
+googleAnalytics = "UA-119879446-1"
 disqusShortname = "https-spsufawi-netlify-com"
 disable_mathjax = false
 
