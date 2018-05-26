@@ -13,14 +13,13 @@ tags:
 
 <div id="functions" class="section level2">
 <h2>Functions</h2>
-</div>
-<div id="function-components" class="section level2">
-<h2>Function Components</h2>
+<div id="function-components" class="section level3">
+<h3>Function Components</h3>
 <ol style="list-style-type: decimal">
 <li>What function allows you to tell if an object is a function? What function allows you to tell if a function is a primitive function?</li>
 </ol>
 <p><strong>Answer:</strong></p>
-<p><code>is.function</code>,<code>is.primitive</code></p>
+<p><code>is.function()</code>,<code>is.primitive()</code></p>
 <pre class="r"><code>is.function(mean)</code></pre>
 <pre><code>## [1] TRUE</code></pre>
 <pre class="r"><code>is.primitive(function(x) x ** 2)</code></pre>
@@ -100,6 +99,7 @@ the <code>environment()</code>, the “map” of the location of the function’
 <pre><code>## [1] 183</code></pre>
 <p>If the functions are primitive functions, printing them do not show the environment they were created in.</p>
 </div>
+</div>
 <div id="lexical-scoping" class="section level2">
 <h2>Lexical scoping</h2>
 <ol style="list-style-type: decimal">
@@ -153,7 +153,7 @@ f(10)</code></pre>
 <pre class="r"><code>x &lt;- sample(replace = TRUE, 20, x = c(1:10, NA))
 y &lt;- runif(min = 0, max = 1, 20)
 cor(m = &quot;k&quot;, y = y, u = &quot;p&quot;, x = x)</code></pre>
-<pre><code>## [1] 0.1375048</code></pre>
+<pre><code>## [1] -0.04272186</code></pre>
 <p>In <code>sample()</code> and <code>runif()</code>, the order of the arguments does not matter as long as it is not ambiguous.</p>
 <p>In <code>cor()</code>, because of the lazy evaluation, <code>m = “k”</code> and <code>u = “p”</code> are not actually evaluated.</p>
 <ol start="2" style="list-style-type: decimal">
@@ -251,9 +251,9 @@ F%xor%F</code></pre>
 <li>Create infix versions of the set functions <code>intersect()</code>, <code>union()</code>, and <code>setdiff()</code>.</li>
 </ol>
 <pre class="r"><code>(x &lt;- c(sort(sample(1:20, 9)), NA))</code></pre>
-<pre><code>##  [1]  2  3  5  7 10 11 14 15 20 NA</code></pre>
+<pre><code>##  [1]  1  4  6  9 10 11 12 13 18 NA</code></pre>
 <pre class="r"><code>(y &lt;- c(sort(sample(3:23, 7)), NA))</code></pre>
-<pre><code>## [1]  4  7  8 12 14 16 22 NA</code></pre>
+<pre><code>## [1]  6 11 12 14 17 22 23 NA</code></pre>
 <p><strong>Answer:</strong></p>
 <div id="infix-version-of-intersect" class="section level4">
 <h4>infix version of intersect()</h4>
@@ -323,7 +323,7 @@ identical(x %setdiff% y, setdiff(x, y))</code></pre>
 }
 modify(x) &lt;- 6324
 x</code></pre>
-<pre><code>##  [1]    1    2    3    4 6324    6    7    8    9   10</code></pre>
+<pre><code>##  [1]    1 6324    3    4    5    6    7    8    9   10</code></pre>
 </div>
 </div>
 <div id="return-values" class="section level2">

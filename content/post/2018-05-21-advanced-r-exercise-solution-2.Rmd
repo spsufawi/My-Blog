@@ -11,13 +11,13 @@ tags:
 
 ##Functions
 
-##Function Components
+###Function Components
 
 1. What function allows you to tell if an object is a function? What function allows you to tell if a function is a primitive function?
 
 <strong>Answer:</strong>
 
-<code>is.function</code>,<code>is.primitive</code>
+<code>is.function()</code>,<code>is.primitive()</code>
 
 
 ```{r}
