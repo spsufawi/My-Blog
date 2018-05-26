@@ -1,0 +1,356 @@
+---
+title: Advanced R Exercise Solution (2)
+author: Xinchen Pan
+date: '2018-05-21'
+slug: advanced-r-exercise-solution-2
+categories:
+  - R
+tags: 
+  - R
+---
+
+##Functions
+
+##Function Components
+
+1. What function allows you to tell if an object is a function? What function allows you to tell if a function is a primitive function?
+
+<strong>Answer:</strong>
+
+<code>is.function</code>,<code>is.primitive</code>
+
+
+```{r}
+is.function(mean)
+is.primitive(function(x) x ** 2)
+```
+
+2. This code makes a list of all functions in the base package.
+
+```{r}
+objs <- mget(ls("package:base"), inherits = TRUE)
+funs <- Filter(is.function, objs)
+```
+
+Use it to answer the following questions:
+
+a. Which base function has the most arguments?
+```{r}
+which.max(sapply(funs, function(x) length(formals(x))))
+```
+
+b. How many base functions have no arguments? What's special about those functions?
+
+
+```{r}
+length(names(funs)[sapply(funs, function(x) length(formals(x)) == 0)])
+```
+
+```{r}
+length(names(funs)[sapply(funs, function(x) 
+  {length(formals(x)) == 0 & is.primitive(x)})])
+```
+```{r}
+names(funs)[sapply(funs, function(x) 
+  {length(formals(x)) == 0 & !is.primitive(x)})]
+```
+
+Most of them are primitive functions.
+
+c. 
+
+```{r}
+funs_primitive <- Filter(is.primitive, Filter(is.function, objs))
+```
+
+3. What are the three important components of a function?
+
+<strong>Answer:</strong>
+
+<ul><li>the <code>body()</code>, the code inside the function.</li>
+
+<li>the <code>formals()</code>, the list of arguments which controls how you can call the function.</li>
+
+<li>the <code>environment()</code>, the "map" of the location of the function's variables.
+</li>
+</ul>
+
+4. When does printing a function not show what environment it was created in?
+
+<strong>Answer:</strong>
+
+
+
+```{r}
+length(names(funs)[sapply(funs, function(x) is.null(environment(x)) | is.primitive(x))])
+length(names(funs)[sapply(funs, function(x) is.null(environment(x)))])
+length(names(funs)[sapply(funs, function(x) is.primitive(x))])
+```
+
+If the functions are primitive functions, printing them do not show the environment they were created in.
+
+
+##Lexical scoping
+
+1. What does the following code return? Why? What does each of the three c's mean?
+
+```{r}
+c <- 10
+c(c = c)
+```
+
+The first c is the variable name. The <code>c = c</code> is to assign the first c which equals 10 to another c. The c outside the bracket is concatenation(<code>c()</code>.
+
+2. What are the four principles that govern how R looks for values?
+
+<ul> 
+<li> name masking </li>
+<li> Functions vs. variables </li>
+<li>  A fresh start </li>
+<li>  Dynamic lookup </li>
+</ul>
+
+3. What does the following function return? 
+
+<strong>Answer:</strong>
+
+202
+
+```{r}
+f <- function(x) {
+  f <- function(x) {
+    f <- function(x) {
+      x ^ 2
+    }
+    f(x) + 1
+  }
+  f(x) * 2
+}
+f(10)
+```
+
+##Function arguments
+
+
+
+1. Clarify the following list of odd function calls:
+
+<strong>Answer:</strong>
+
+```{r}
+x <- sample(replace = TRUE, 20, x = c(1:10, NA))
+y <- runif(min = 0, max = 1, 20)
+cor(m = "k", y = y, u = "p", x = x)
+```
+
+In <code>sample()</code> and <code>runif()</code>, the order of the arguments does not matter as long as it is not ambiguous. 
+
+In <code>cor()</code>, because of the lazy evaluation, <code>m = "k"</code> and <code>u = "p"</code> are not actually evaluated.
+
+2. What does this function return? Why? Which principle does it illustrate?
+
+<strong>Answer:</strong>
+
+It returns 3.  
+
+```{r}
+f1 <- function(x = {y <- 1; 2}, y = 0) {
+  x + y
+}
+f1()
+```
+
+If we check <code>{</code>, it shows <strong>For {, the result of the last expression evaluated. This has the visibility of the last evaluation.</strong>. Thus the function is equivalent to 
+
+```{r}
+f1 <- function(x = 2, y = 1) {
+  x + y
+}
+f1()
+```
+
+The principle is lazy evaluation.
+
+3. What does this function return? Why? Which principle does it illustrate?
+
+<strong>Answer:</strong>
+
+It returns 100. 
+
+```{r}
+f2 <- function(x = z) {
+  z <- 100
+  x
+}
+f2()
+```
+
+The principle it illustrates is <strong>dynamic lookup</strong>
+
+##Special calls
+
+1. Create a list of all the replacement functions found in the base package. Which ones are primitive functions?
+
+<strong>Answer:</strong>
+
+```{r}
+names(funs)[sapply(names(funs), function(x) grepl("<-", x))]
+```
+
+2. 
+
+What are valid names for user-created infix functions?
+
+<strong>Answer:</strong>
+
+It has to  start and end with %.
+
+3. <strong>Answer:</strong>
+
+```{r}
+`%xor%` <- function(x, y){
+  if(x != y)
+    TRUE
+  else 
+    FALSE
+}
+
+F%xor%F
+F%xor%T
+T%xor%F
+T%xor%T
+```
+
+4. Create infix versions of the set functions <code>intersect()</code>, <code>union()</code>, and <code>setdiff()</code>.
+
+
+```{r}
+(x <- c(sort(sample(1:20, 9)), NA))
+(y <- c(sort(sample(3:23, 7)), NA))
+```
+
+
+<strong>Answer:</strong>
+
+####infix version of intersect()
+```{r}
+`%ins%` <- function(x, y){
+  result <- c()
+  for(val in x){
+    if(val %in% y){
+      result <- c(val, result)
+    }
+  }
+  if(is.null(result)){
+    message("No common values")
+  }
+  else{
+    unique(sort(result, na.last = TRUE))
+  }
+}
+
+identical(intersect(x, y), x %ins% y)
+
+c(1,2,3)%ins%c(1,2)
+c(1,2,3)%ins%c(1,2,11,123)
+c(1, 2)%ins%c(3, 4)
+```
+
+####infix version of union()
+
+```{r}
+`%union%` <- function(x, y){
+  result <- y
+  for(val in x){
+      result <- c(val, result)
+  }
+  unique(sort(result, na.last = TRUE))
+}
+
+setdiff(x %union% y,  union(x, y))
+
+c(6, 3, 2, 4) %union% c(2, 5, 8)
+c(6, 3, 2, 4) %union% c(4, 0, 1)
+```
+
+####infix version of union()
+
+```{r}
+`%setdiff%` <- function(x, y){
+  result <- c()
+  for(val in x){
+    if(!(val %in% y)){
+      result <- c(val, result)
+    }
+  }
+    unique(sort(result, na.last = TRUE))
+}
+
+identical(x %setdiff% y, setdiff(x, y))
+```
+
+5. Create a replacement function that modifies a random location in a vector.
+
+<strong>Answer:</strong>
+
+```{r}
+x <- 1:10
+`modify<-` <- function(x, value) {
+  x[sample(length(x), 1)] <- value
+  x
+}
+modify(x) <- 6324
+x
+```
+
+
+##Return values
+
+How does the chdir parameter of source() compare to in_dir()? Why might you prefer one approach to the other?
+
+<strong>Answer:</strong>
+
+```{r, eval=FALSE}
+##The chdir parameter of source()
+
+if (chdir) {
+            if (is.character(ofile)) {
+                if (grepl("^(ftp|http|file)://", ofile)) 
+                  warning("'chdir = TRUE' makes no sense for a URL")
+                else if ((path <- dirname(ofile)) != ".") {
+                  owd <- getwd()
+                  if (is.null(owd)) 
+                    stop("cannot 'chdir' as current directory is unknown")
+                  on.exit(setwd(owd), add = TRUE)
+                  setwd(path)
+                }
+            }
+            else {
+                warning
+            }
+  
+in_dir <- function(dir, code) {
+  old <- setwd(dir)
+  on.exit(setwd(old))
+
+  force(code)
+}
+```
+
+If we set <code>chdir = TRUE</code>, the working directory is temporarily changed from <code>getwd()</code> to where the sourced file locates. <code>in_dir</code> is more flexible, we can change the directory to anywhere we want temporarily.
+
+
+2. What function undoes the action of <code>library()</code>? How do you save and restore the values of <code>options()</code> and <code>par()</code>?
+
+<strong>Answer:</strong>
+
+Use <code>detach()</code>
+
+```{r,}
+library(ggplot2)
+detach(package:ggplot2)
+```
+
+Just use <code>options()</code>
+
+tbc

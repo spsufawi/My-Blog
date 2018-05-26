@@ -1,0 +1,367 @@
+---
+title: Advanced R Exercise Solution (2)
+author: Xinchen Pan
+date: '2018-05-21'
+slug: advanced-r-exercise-solution-2
+categories:
+  - R
+tags: 
+  - R
+---
+
+
+
+<div id="functions" class="section level2">
+<h2>Functions</h2>
+</div>
+<div id="function-components" class="section level2">
+<h2>Function Components</h2>
+<ol style="list-style-type: decimal">
+<li>What function allows you to tell if an object is a function? What function allows you to tell if a function is a primitive function?</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<p><code>is.function</code>,<code>is.primitive</code></p>
+<pre class="r"><code>is.function(mean)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>is.primitive(function(x) x ** 2)</code></pre>
+<pre><code>## [1] FALSE</code></pre>
+<ol start="2" style="list-style-type: decimal">
+<li>This code makes a list of all functions in the base package.</li>
+</ol>
+<pre class="r"><code>objs &lt;- mget(ls(&quot;package:base&quot;), inherits = TRUE)
+funs &lt;- Filter(is.function, objs)</code></pre>
+<p>Use it to answer the following questions:</p>
+<ol style="list-style-type: lower-alpha">
+<li>Which base function has the most arguments?</li>
+</ol>
+<pre class="r"><code>which.max(sapply(funs, function(x) length(formals(x))))</code></pre>
+<pre><code>## scan 
+##  945</code></pre>
+<ol start="2" style="list-style-type: lower-alpha">
+<li>How many base functions have no arguments? What’s special about those functions?</li>
+</ol>
+<pre class="r"><code>length(names(funs)[sapply(funs, function(x) length(formals(x)) == 0)])</code></pre>
+<pre><code>## [1] 224</code></pre>
+<pre class="r"><code>length(names(funs)[sapply(funs, function(x) 
+  {length(formals(x)) == 0 &amp; is.primitive(x)})])</code></pre>
+<pre><code>## [1] 183</code></pre>
+<pre class="r"><code>names(funs)[sapply(funs, function(x) 
+  {length(formals(x)) == 0 &amp; !is.primitive(x)})]</code></pre>
+<pre><code>##  [1] &quot;closeAllConnections&quot;      &quot;contributors&quot;            
+##  [3] &quot;Cstack_info&quot;              &quot;date&quot;                    
+##  [5] &quot;default.stringsAsFactors&quot; &quot;extSoftVersion&quot;          
+##  [7] &quot;getAllConnections&quot;        &quot;geterrmessage&quot;           
+##  [9] &quot;getLoadedDLLs&quot;            &quot;getRversion&quot;             
+## [11] &quot;getTaskCallbackNames&quot;     &quot;getwd&quot;                   
+## [13] &quot;iconvlist&quot;                &quot;is.R&quot;                    
+## [15] &quot;l10n_info&quot;                &quot;La_library&quot;              
+## [17] &quot;La_version&quot;               &quot;libcurlVersion&quot;          
+## [19] &quot;licence&quot;                  &quot;license&quot;                 
+## [21] &quot;loadedNamespaces&quot;         &quot;loadingNamespaceInfo&quot;    
+## [23] &quot;memory.profile&quot;           &quot;pcre_config&quot;             
+## [25] &quot;R.Version&quot;                &quot;search&quot;                  
+## [27] &quot;searchpaths&quot;              &quot;stderr&quot;                  
+## [29] &quot;stdin&quot;                    &quot;stdout&quot;                  
+## [31] &quot;sys.calls&quot;                &quot;Sys.Date&quot;                
+## [33] &quot;sys.frames&quot;               &quot;Sys.getpid&quot;              
+## [35] &quot;Sys.info&quot;                 &quot;Sys.localeconv&quot;          
+## [37] &quot;sys.nframe&quot;               &quot;sys.on.exit&quot;             
+## [39] &quot;sys.parents&quot;              &quot;sys.status&quot;              
+## [41] &quot;Sys.time&quot;</code></pre>
+<p>Most of them are primitive functions.</p>
+<ol start="3" style="list-style-type: lower-alpha">
+<li></li>
+</ol>
+<pre class="r"><code>funs_primitive &lt;- Filter(is.primitive, Filter(is.function, objs))</code></pre>
+<ol start="3" style="list-style-type: decimal">
+<li>What are the three important components of a function?</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<ul>
+<li>
+the <code>body()</code>, the code inside the function.
+</li>
+<li>
+the <code>formals()</code>, the list of arguments which controls how you can call the function.
+</li>
+<li>
+the <code>environment()</code>, the “map” of the location of the function’s variables.
+</li>
+</ul>
+<ol start="4" style="list-style-type: decimal">
+<li>When does printing a function not show what environment it was created in?</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<pre class="r"><code>length(names(funs)[sapply(funs, function(x) is.null(environment(x)) | is.primitive(x))])</code></pre>
+<pre><code>## [1] 183</code></pre>
+<pre class="r"><code>length(names(funs)[sapply(funs, function(x) is.null(environment(x)))])</code></pre>
+<pre><code>## [1] 183</code></pre>
+<pre class="r"><code>length(names(funs)[sapply(funs, function(x) is.primitive(x))])</code></pre>
+<pre><code>## [1] 183</code></pre>
+<p>If the functions are primitive functions, printing them do not show the environment they were created in.</p>
+</div>
+<div id="lexical-scoping" class="section level2">
+<h2>Lexical scoping</h2>
+<ol style="list-style-type: decimal">
+<li>What does the following code return? Why? What does each of the three c’s mean?</li>
+</ol>
+<pre class="r"><code>c &lt;- 10
+c(c = c)</code></pre>
+<pre><code>##  c 
+## 10</code></pre>
+<p>The first c is the variable name. The <code>c = c</code> is to assign the first c which equals 10 to another c. The c outside the bracket is concatenation(<code>c()</code>.</p>
+<ol start="2" style="list-style-type: decimal">
+<li>What are the four principles that govern how R looks for values?</li>
+</ol>
+<ul>
+<li>
+name masking
+</li>
+<li>
+Functions vs. variables
+</li>
+<li>
+A fresh start
+</li>
+<li>
+Dynamic lookup
+</li>
+</ul>
+<ol start="3" style="list-style-type: decimal">
+<li>What does the following function return?</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<p>202</p>
+<pre class="r"><code>f &lt;- function(x) {
+  f &lt;- function(x) {
+    f &lt;- function(x) {
+      x ^ 2
+    }
+    f(x) + 1
+  }
+  f(x) * 2
+}
+f(10)</code></pre>
+<pre><code>## [1] 202</code></pre>
+</div>
+<div id="function-arguments" class="section level2">
+<h2>Function arguments</h2>
+<ol style="list-style-type: decimal">
+<li>Clarify the following list of odd function calls:</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<pre class="r"><code>x &lt;- sample(replace = TRUE, 20, x = c(1:10, NA))
+y &lt;- runif(min = 0, max = 1, 20)
+cor(m = &quot;k&quot;, y = y, u = &quot;p&quot;, x = x)</code></pre>
+<pre><code>## [1] 0.1375048</code></pre>
+<p>In <code>sample()</code> and <code>runif()</code>, the order of the arguments does not matter as long as it is not ambiguous.</p>
+<p>In <code>cor()</code>, because of the lazy evaluation, <code>m = “k”</code> and <code>u = “p”</code> are not actually evaluated.</p>
+<ol start="2" style="list-style-type: decimal">
+<li>What does this function return? Why? Which principle does it illustrate?</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<p>It returns 3.</p>
+<pre class="r"><code>f1 &lt;- function(x = {y &lt;- 1; 2}, y = 0) {
+  x + y
+}
+f1()</code></pre>
+<pre><code>## [1] 3</code></pre>
+<p>If we check <code>{</code>, it shows <strong>For {, the result of the last expression evaluated. This has the visibility of the last evaluation.</strong>. Thus the function is equivalent to</p>
+<pre class="r"><code>f1 &lt;- function(x = 2, y = 1) {
+  x + y
+}
+f1()</code></pre>
+<pre><code>## [1] 3</code></pre>
+<p>The principle is lazy evaluation.</p>
+<ol start="3" style="list-style-type: decimal">
+<li>What does this function return? Why? Which principle does it illustrate?</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<p>It returns 100.</p>
+<pre class="r"><code>f2 &lt;- function(x = z) {
+  z &lt;- 100
+  x
+}
+f2()</code></pre>
+<pre><code>## [1] 100</code></pre>
+<p>The principle it illustrates is <strong>dynamic lookup</strong></p>
+</div>
+<div id="special-calls" class="section level2">
+<h2>Special calls</h2>
+<ol style="list-style-type: decimal">
+<li>Create a list of all the replacement functions found in the base package. Which ones are primitive functions?</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<pre class="r"><code>names(funs)[sapply(names(funs), function(x) grepl(&quot;&lt;-&quot;, x))]</code></pre>
+<pre><code>##  [1] &quot;$&lt;-&quot;                     &quot;$&lt;-.data.frame&quot;         
+##  [3] &quot;@&lt;-&quot;                     &quot;[[&lt;-&quot;                   
+##  [5] &quot;[[&lt;-.data.frame&quot;         &quot;[[&lt;-.factor&quot;            
+##  [7] &quot;[[&lt;-.numeric_version&quot;    &quot;[&lt;-&quot;                    
+##  [9] &quot;[&lt;-.data.frame&quot;          &quot;[&lt;-.Date&quot;               
+## [11] &quot;[&lt;-.factor&quot;              &quot;[&lt;-.numeric_version&quot;    
+## [13] &quot;[&lt;-.POSIXct&quot;             &quot;[&lt;-.POSIXlt&quot;            
+## [15] &quot;&lt;-&quot;                      &quot;&lt;&lt;-&quot;                    
+## [17] &quot;attr&lt;-&quot;                  &quot;attributes&lt;-&quot;           
+## [19] &quot;body&lt;-&quot;                  &quot;class&lt;-&quot;                
+## [21] &quot;colnames&lt;-&quot;              &quot;comment&lt;-&quot;              
+## [23] &quot;diag&lt;-&quot;                  &quot;dim&lt;-&quot;                  
+## [25] &quot;dimnames&lt;-&quot;              &quot;dimnames&lt;-.data.frame&quot;  
+## [27] &quot;Encoding&lt;-&quot;              &quot;environment&lt;-&quot;          
+## [29] &quot;formals&lt;-&quot;               &quot;is.na&lt;-&quot;                
+## [31] &quot;is.na&lt;-.default&quot;         &quot;is.na&lt;-.factor&quot;         
+## [33] &quot;is.na&lt;-.numeric_version&quot; &quot;length&lt;-&quot;               
+## [35] &quot;length&lt;-.Date&quot;           &quot;length&lt;-.difftime&quot;      
+## [37] &quot;length&lt;-.factor&quot;         &quot;length&lt;-.POSIXct&quot;       
+## [39] &quot;length&lt;-.POSIXlt&quot;        &quot;levels&lt;-&quot;               
+## [41] &quot;levels&lt;-.factor&quot;         &quot;mode&lt;-&quot;                 
+## [43] &quot;mostattributes&lt;-&quot;        &quot;names&lt;-&quot;                
+## [45] &quot;names&lt;-.POSIXlt&quot;         &quot;oldClass&lt;-&quot;             
+## [47] &quot;parent.env&lt;-&quot;            &quot;regmatches&lt;-&quot;           
+## [49] &quot;row.names&lt;-&quot;             &quot;row.names&lt;-.data.frame&quot; 
+## [51] &quot;row.names&lt;-.default&quot;     &quot;rownames&lt;-&quot;             
+## [53] &quot;split&lt;-&quot;                 &quot;split&lt;-.data.frame&quot;     
+## [55] &quot;split&lt;-.default&quot;         &quot;storage.mode&lt;-&quot;         
+## [57] &quot;substr&lt;-&quot;                &quot;substring&lt;-&quot;            
+## [59] &quot;units&lt;-&quot;                 &quot;units&lt;-.difftime&quot;</code></pre>
+<ol start="2" style="list-style-type: decimal">
+<li></li>
+</ol>
+<p>What are valid names for user-created infix functions?</p>
+<p><strong>Answer:</strong></p>
+<p>It has to start and end with %.</p>
+<ol start="3" style="list-style-type: decimal">
+<li><strong>Answer:</strong></li>
+</ol>
+<pre class="r"><code>`%xor%` &lt;- function(x, y){
+  if(x != y)
+    TRUE
+  else 
+    FALSE
+}
+
+F%xor%F</code></pre>
+<pre><code>## [1] FALSE</code></pre>
+<pre class="r"><code>F%xor%T</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>T%xor%F</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>T%xor%T</code></pre>
+<pre><code>## [1] FALSE</code></pre>
+<ol start="4" style="list-style-type: decimal">
+<li>Create infix versions of the set functions <code>intersect()</code>, <code>union()</code>, and <code>setdiff()</code>.</li>
+</ol>
+<pre class="r"><code>(x &lt;- c(sort(sample(1:20, 9)), NA))</code></pre>
+<pre><code>##  [1]  2  3  5  7 10 11 14 15 20 NA</code></pre>
+<pre class="r"><code>(y &lt;- c(sort(sample(3:23, 7)), NA))</code></pre>
+<pre><code>## [1]  4  7  8 12 14 16 22 NA</code></pre>
+<p><strong>Answer:</strong></p>
+<div id="infix-version-of-intersect" class="section level4">
+<h4>infix version of intersect()</h4>
+<pre class="r"><code>`%ins%` &lt;- function(x, y){
+  result &lt;- c()
+  for(val in x){
+    if(val %in% y){
+      result &lt;- c(val, result)
+    }
+  }
+  if(is.null(result)){
+    message(&quot;No common values&quot;)
+  }
+  else{
+    unique(sort(result, na.last = TRUE))
+  }
+}
+
+identical(intersect(x, y), x %ins% y)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<pre class="r"><code>c(1,2,3)%ins%c(1,2)</code></pre>
+<pre><code>## [1] 1 2</code></pre>
+<pre class="r"><code>c(1,2,3)%ins%c(1,2,11,123)</code></pre>
+<pre><code>## [1] 1 2</code></pre>
+<pre class="r"><code>c(1, 2)%ins%c(3, 4)</code></pre>
+<pre><code>## No common values</code></pre>
+</div>
+<div id="infix-version-of-union" class="section level4">
+<h4>infix version of union()</h4>
+<pre class="r"><code>`%union%` &lt;- function(x, y){
+  result &lt;- y
+  for(val in x){
+      result &lt;- c(val, result)
+  }
+  unique(sort(result, na.last = TRUE))
+}
+
+setdiff(x %union% y,  union(x, y))</code></pre>
+<pre><code>## integer(0)</code></pre>
+<pre class="r"><code>c(6, 3, 2, 4) %union% c(2, 5, 8)</code></pre>
+<pre><code>## [1] 2 3 4 5 6 8</code></pre>
+<pre class="r"><code>c(6, 3, 2, 4) %union% c(4, 0, 1)</code></pre>
+<pre><code>## [1] 0 1 2 3 4 6</code></pre>
+</div>
+<div id="infix-version-of-union-1" class="section level4">
+<h4>infix version of union()</h4>
+<pre class="r"><code>`%setdiff%` &lt;- function(x, y){
+  result &lt;- c()
+  for(val in x){
+    if(!(val %in% y)){
+      result &lt;- c(val, result)
+    }
+  }
+    unique(sort(result, na.last = TRUE))
+}
+
+identical(x %setdiff% y, setdiff(x, y))</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<ol start="5" style="list-style-type: decimal">
+<li>Create a replacement function that modifies a random location in a vector.</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<pre class="r"><code>x &lt;- 1:10
+`modify&lt;-` &lt;- function(x, value) {
+  x[sample(length(x), 1)] &lt;- value
+  x
+}
+modify(x) &lt;- 6324
+x</code></pre>
+<pre><code>##  [1]    1    2    3    4 6324    6    7    8    9   10</code></pre>
+</div>
+</div>
+<div id="return-values" class="section level2">
+<h2>Return values</h2>
+<p>How does the chdir parameter of source() compare to in_dir()? Why might you prefer one approach to the other?</p>
+<p><strong>Answer:</strong></p>
+<pre class="r"><code>##The chdir parameter of source()
+
+if (chdir) {
+            if (is.character(ofile)) {
+                if (grepl(&quot;^(ftp|http|file)://&quot;, ofile)) 
+                  warning(&quot;&#39;chdir = TRUE&#39; makes no sense for a URL&quot;)
+                else if ((path &lt;- dirname(ofile)) != &quot;.&quot;) {
+                  owd &lt;- getwd()
+                  if (is.null(owd)) 
+                    stop(&quot;cannot &#39;chdir&#39; as current directory is unknown&quot;)
+                  on.exit(setwd(owd), add = TRUE)
+                  setwd(path)
+                }
+            }
+            else {
+                warning
+            }
+  
+in_dir &lt;- function(dir, code) {
+  old &lt;- setwd(dir)
+  on.exit(setwd(old))
+
+  force(code)
+}</code></pre>
+<p>If we set <code>chdir = TRUE</code>, the working directory is temporarily changed from <code>getwd()</code> to where the sourced file locates. <code>in_dir</code> is more flexible, we can change the directory to anywhere we want temporarily.</p>
+<ol start="2" style="list-style-type: decimal">
+<li>What function undoes the action of <code>library()</code>? How do you save and restore the values of <code>options()</code> and <code>par()</code>?</li>
+</ol>
+<p><strong>Answer:</strong></p>
+<p>Use <code>detach()</code></p>
+<pre class="r"><code>library(ggplot2)
+detach(package:ggplot2)</code></pre>
+<p>Just use <code>options()</code></p>
+<p>tbc</p>
+</div>

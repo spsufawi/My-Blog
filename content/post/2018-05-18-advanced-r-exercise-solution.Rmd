@@ -2,7 +2,7 @@
 title: Advanced R Exercise Solution (1)
 author: Xinchen Pan
 date: '2018-05-18'
-slug: advanced-r-exercise-solution
+slug: advanced-r-exercise-solution-1
 categories:
   - R
 tags:
