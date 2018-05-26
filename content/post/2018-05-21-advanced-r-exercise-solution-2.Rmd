@@ -1,7 +1,7 @@
 ---
 title: Advanced R Exercise Solution (2)
 author: Xinchen Pan
-date: '2018-05-21'
+date: '2018-05-23'
 slug: advanced-r-exercise-solution-2
 categories:
   - R
@@ -41,11 +41,12 @@ which.max(sapply(funs, function(x) length(formals(x))))
 
 b. How many base functions have no arguments? What's special about those functions?
 
-
+223 base functions do not have arguments.
 ```{r}
 length(names(funs)[sapply(funs, function(x) length(formals(x)) == 0)])
 ```
 
+183 of them are primitive functions. 
 ```{r}
 length(names(funs)[sapply(funs, function(x) 
   {length(formals(x)) == 0 & is.primitive(x)})])
@@ -55,9 +56,7 @@ names(funs)[sapply(funs, function(x)
   {length(formals(x)) == 0 & !is.primitive(x)})]
 ```
 
-Most of them are primitive functions.
-
-c. 
+c. How could you adapt the code to find all primitive functions?
 
 ```{r}
 funs_primitive <- Filter(is.primitive, Filter(is.function, objs))
@@ -99,7 +98,7 @@ c <- 10
 c(c = c)
 ```
 
-The first c is the variable name. The <code>c = c</code> is to assign the first c which equals 10 to another c. The c outside the bracket is concatenation(<code>c()</code>.
+The first c is the variable name. The <code>c = c</code> is to assign the first c which equals 10 to another c. The c outside the bracket is concatenation (<code>c()</code>).
 
 2. What are the four principles that govern how R looks for values?
 
@@ -273,7 +272,7 @@ c(6, 3, 2, 4) %union% c(2, 5, 8)
 c(6, 3, 2, 4) %union% c(4, 0, 1)
 ```
 
-####infix version of union()
+####infix version of setdiff()
 
 ```{r}
 `%setdiff%` <- function(x, y){
@@ -351,6 +350,107 @@ library(ggplot2)
 detach(package:ggplot2)
 ```
 
-Just use <code>options()</code>
+We can use <code>getoptions()</code>
+```{r}
+##e.g
+getOption("width")
+```
 
-tbc
+Type <code>par()</code>
+
+3. Write a function that opens a graphics device, runs the supplied code, and closes the graphics device (always, regardless of whether or not the plotting code worked).
+
+```{r, eval=FALSE}
+plot_png <- function(code){
+  png(filename = "test.png")
+  on.exit(dev.off())
+  force(code)
+}
+
+plot_png(getwd())
+```
+
+4. We can use <code>on.exit()</code> to implement a simple version of <code>capture.output()</code>.
+
+```{r,eval=FALSE}
+capture.output2 <- function(code) {
+  temp <- tempfile()
+  on.exit(file.remove(temp), add = TRUE)
+
+  sink(temp)
+  on.exit(sink(), add = TRUE)
+
+  force(code)
+  readLines(temp)
+}
+capture.output2(cat("a", "b", "c", sep = "\n"))
+```
+
+
+Compare <code>capture.output()</code> to <code>capture.output2()</code>. How do the functions differ? What features have I removed to make the key ideas easier to see? How have I rewritten the key ideas to be easier to understand?
+
+The source code of <code>capture.output()</code>
+
+```{r, eval=FALSE}
+function (..., file = NULL, append = FALSE, type = c("output", 
+    "message"), split = FALSE) 
+{
+    args <- substitute(list(...))[-1L]
+    type <- match.arg(type)
+    rval <- NULL
+    closeit <- TRUE
+    if (is.null(file)) 
+        file <- textConnection("rval", "w", local = TRUE)
+    else if (is.character(file)) 
+        file <- file(file, if (append) 
+            "a"
+        else "w")
+    else if (inherits(file, "connection")) {
+        if (!isOpen(file)) 
+            open(file, if (append) 
+                "a"
+            else "w")
+        else closeit <- FALSE
+    }
+    else stop("'file' must be NULL, a character string or a connection")
+    sink(file, type = type, split = split)
+    on.exit({
+        sink(type = type, split = split)
+        if (closeit) close(file)
+    })
+    pf <- parent.frame()
+    evalVis <- function(expr) withVisible(eval(expr, pf))
+    for (i in seq_along(args)) {
+        expr <- args[[i]]
+        tmp <- switch(mode(expr), expression = lapply(expr, evalVis), 
+            call = , name = list(evalVis(expr)), stop("bad argument"))
+        for (item in tmp) if (item$visible) 
+            print(item$value)
+    }
+    on.exit()
+    sink(type = type, split = split)
+    if (closeit) 
+        close(file)
+    if (is.null(rval)) 
+        invisible(NULL)
+    else rval
+}
+<bytecode: 0x000000001801efb0>
+<environment: namespace:utils>
+```
+
+The <code>capture.output()</code> is much longer than <code>capture.output2()</code> because it considers many cases and handles the exceptions. 
+
+Also in <code>capture.output2()</code>, we use <code>readLines()</code> to print the values in the file but in <code>capture.output()</code>, it is implemented in another way.
+
+```{r,eval=FALSE}
+ for (i in seq_along(args)) {
+        expr <- args[[i]]
+        tmp <- switch(mode(expr), expression = lapply(expr, evalVis), 
+            call = , name = list(evalVis(expr)), stop("bad argument"))
+        for (item in tmp) if (item$visible) 
+            print(item$value)
+    }
+```
+
+
