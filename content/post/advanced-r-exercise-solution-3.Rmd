@@ -1,0 +1,165 @@
+---
+title: Advanced R Exercise Solution (3)
+author: Xinchen Pan
+date: '2018-06-08'
+slug: advanced-r-exercise-solution-3
+categories:
+  - R
+tags:
+  - R
+---
+
+```{r, echo=FALSE}
+library(pryr)
+```
+
+The exercise is getting harder.
+
+## OO field guide
+
+### Base types & S3 
+
+1. Read the source code for <code>t()</code> and <code>t.test()</code> and confirm that <code>t.test()</code> is an S3 generic and not an S3 method. What happens if you create an object with class test and call <code>t()</code> with it?
+
+```{r}
+t
+t.test
+```
+
+```{r}
+ftype(t)
+ftype(t.test)
+```
+
+Since object test does not have a method <code>t()</code> associated with it. Calling <code>t()</code> will call the default class. 
+
+2.  What classes have a method for the Math group generic in base R? Read the source code. How do the methods work?
+
+
+```{r}
+methods(Math)
+```
+
+3.  R has two classes for representing date time data, <code>POSIXct</code> and <code>POSIXlt</code>, which both inherit from <code>POSIXt</code>. Which generics have different behaviours for the two classes? Which generics share the same behaviour?
+
+Basically the generics of those two inherited classes that exist in <code>POSIXct</code> share the same behavior. The generics that only exist in one class has different behavior. 
+
+```{r}
+methods(class = "POSIXt")
+```
+
+
+```{r}
+methods(class="POSIXct")
+```
+
+```{r}
+methods(class="POSIXlt")
+```
+
+4. Which base generic has the greatest number of defined methods?
+
+```{r}
+library(pryr)
+objs <- mget(ls("package:base"), inherits = TRUE)
+funs <- Filter(is.function, objs)
+
+generics <- funs[sapply(funs, function(x) ("generic" %in% ftype(x)))]
+
+names(generics)[which.max(sapply(names(generics), function(x) length(methods(x))))]
+```
+
+5. <code>UseMethod()</code> calls methods in a special way. Predict what the following code will return, then run it and read the help for <code>UseMethod()</code> to figure out what’s going on. Write down the rules in the simplest form possible.
+
+
+```{r}
+y <- 1
+g <- function(x) {
+  y <- 2
+  UseMethod("g")
+}
+g.numeric <- function(x) y
+g(10)
+
+h <- function(x) {
+  x <- 10
+  UseMethod("h")
+}
+h.character <- function(x) paste("char", x)
+h.numeric <- function(x) paste("num", x)
+
+h("a")
+```
+
+<code>g(10)</code> will return 2. Since y is not in the function, it will search in <code>g</code>
+
+<code>h("a")</code> will return "char a" because "a" is a character. <code>h.numeric()</code> will not be executed or further searched.
+
+6. Internal generics don’t dispatch on the implicit class of base types. Carefully read <code>?"internal generic"</code> to determine why the length of f and g is different in the example below. What function helps distinguish between the behaviour of <code>f</code> and <code>g</code>?
+
+
+```{r}
+f <- function() 1
+g <- function() 2
+class(g) <- "function"
+
+class(f)
+class(g)
+
+length.function <- function(x) "function"
+length(f)
+length(g)
+```
+
+<code>length(f)</code> will not search for <code>length.function</code> thus "function" will not be returned unlike <code>length(d)</code>. <code>f</code> does not have a class associated with it so internal generics don’t dispatch on the implicit class of base types. 
+
+
+
+###S4
+
+1. Which S4 generic has the most methods defined for it? Which S4 class has the most methods associated with it?
+
+```{r}
+generics<- getGenerics(where = search())
+generics_s4 <- generics@.Data[sapply(generics@.Data, function(x) isS4(get(x)))]
+
+generics_s4[which.max(sapply(generics_s4, function(x) length(methods(x))))]
+```
+
+
+```{r}
+s4class <- getClasses(where = .GlobalEnv, inherits = TRUE)
+
+Methods <- sapply(s4class, function(x) showMethods(classes = x, printTo = FALSE))
+
+names(Methods)[which.max(lapply(Methods, function(x) length(grep("Function", x))))]
+```
+
+2. What happens if you define a new S4 class that doesn’t “contain” an existing class? (Hint: read about virtual classes in <code>?setClass</code>.)
+
+<blockquote>
+In the latter case, a virtual class may include slots to provide some common behavior without fully defining the object—see the class traceable for an example. Note that "VIRTUAL" does not carry over to subclasses; a class that contains a virtual class is not itself automatically virtual.
+</blockquote>
+
+
+
+3. What happens if you pass an S4 object to an S3 generic? What happens if you pass an S3 object to an S4 generic? (Hint: read <code>?setOldClass</code> for the second case.)
+
+
+###RC
+
+1. Use a field function to prevent the account balance from being directly manipulated. (Hint: create a “hidden” .balance field, and read the help for the fields argument in <code>setRefClass()</code>.)
+
+Not sure
+
+2. I claimed that there aren’t any RC classes in base R, but that was a bit of a simplification. Use <code>getClasses()</code> and find which classes <code>extend()</code> from <code>envRefClass</code>. What are the classes used for? (Hint: recall how to look up the documentation for a class.)
+
+```{r}
+classes <- getClasses(where = .GlobalEnv, inherits = TRUE)
+
+classes[(sapply(classes, function(x) extends(x, "envRefClass")))]
+```
+
+
+
+

@@ -1,0 +1,164 @@
+---
+title: Advanced R Exercise Solution (3)
+author: Xinchen Pan
+date: '2018-06-08'
+slug: advanced-r-exercise-solution-3
+categories:
+  - R
+tags:
+  - R
+---
+
+
+
+<p>The exercise is getting harder.</p>
+<div id="oo-field-guide" class="section level2">
+<h2>OO field guide</h2>
+<div id="base-types-s3" class="section level3">
+<h3>Base types &amp; S3</h3>
+<ol style="list-style-type: decimal">
+<li>Read the source code for <code>t()</code> and <code>t.test()</code> and confirm that <code>t.test()</code> is an S3 generic and not an S3 method. What happens if you create an object with class test and call <code>t()</code> with it?</li>
+</ol>
+<pre class="r"><code>t</code></pre>
+<pre><code>## function (x) 
+## UseMethod(&quot;t&quot;)
+## &lt;bytecode: 0x0000000019ab3e08&gt;
+## &lt;environment: namespace:base&gt;</code></pre>
+<pre class="r"><code>t.test</code></pre>
+<pre><code>## function (x, ...) 
+## UseMethod(&quot;t.test&quot;)
+## &lt;bytecode: 0x00000000190b4970&gt;
+## &lt;environment: namespace:stats&gt;</code></pre>
+<pre class="r"><code>ftype(t)</code></pre>
+<pre><code>## [1] &quot;s3&quot;      &quot;generic&quot;</code></pre>
+<pre class="r"><code>ftype(t.test)</code></pre>
+<pre><code>## [1] &quot;s3&quot;      &quot;generic&quot;</code></pre>
+<p>Since object test does not have a method <code>t()</code> associated with it. Calling <code>t()</code> will call the default class.</p>
+<ol start="2" style="list-style-type: decimal">
+<li>What classes have a method for the Math group generic in base R? Read the source code. How do the methods work?</li>
+</ol>
+<pre class="r"><code>methods(Math)</code></pre>
+<pre><code>## [1] Math,nonStructure-method Math,structure-method   
+## [3] Math.data.frame          Math.Date               
+## [5] Math.difftime            Math.factor             
+## [7] Math.POSIXt             
+## see &#39;?methods&#39; for accessing help and source code</code></pre>
+<ol start="3" style="list-style-type: decimal">
+<li>R has two classes for representing date time data, <code>POSIXct</code> and <code>POSIXlt</code>, which both inherit from <code>POSIXt</code>. Which generics have different behaviours for the two classes? Which generics share the same behaviour?</li>
+</ol>
+<p>Basically the generics of those two inherited classes that exist in <code>POSIXct</code> share the same behavior. The generics that only exist in one class has different behavior.</p>
+<pre class="r"><code>methods(class = &quot;POSIXt&quot;)</code></pre>
+<pre><code>##  [1] -            +            all.equal    as.character Axis        
+##  [6] coerce       cut          diff         hist         initialize  
+## [11] is.numeric   julian       Math         months       Ops         
+## [16] pretty       quantile     quarters     round        seq         
+## [21] show         slotsFromS3  str          trunc        weekdays    
+## see &#39;?methods&#39; for accessing help and source code</code></pre>
+<pre class="r"><code>methods(class=&quot;POSIXct&quot;)</code></pre>
+<pre><code>##  [1] [             [[            [&lt;-           as.data.frame as.Date      
+##  [6] as.list       as.POSIXlt    c             coerce        format       
+## [11] initialize    length&lt;-      mean          print         rep          
+## [16] show          slotsFromS3   split         summary       Summary      
+## [21] weighted.mean xtfrm        
+## see &#39;?methods&#39; for accessing help and source code</code></pre>
+<pre class="r"><code>methods(class=&quot;POSIXlt&quot;)</code></pre>
+<pre><code>##  [1] [             [[            [&lt;-           anyNA         as.data.frame
+##  [6] as.Date       as.double     as.list       as.matrix     as.POSIXct   
+## [11] c             coerce        duplicated    format        initialize   
+## [16] is.na         length        length&lt;-      mean          names        
+## [21] names&lt;-       print         rep           show          slotsFromS3  
+## [26] sort          summary       Summary       unique        weighted.mean
+## [31] xtfrm        
+## see &#39;?methods&#39; for accessing help and source code</code></pre>
+<ol start="4" style="list-style-type: decimal">
+<li>Which base generic has the greatest number of defined methods?</li>
+</ol>
+<pre class="r"><code>library(pryr)
+objs &lt;- mget(ls(&quot;package:base&quot;), inherits = TRUE)
+funs &lt;- Filter(is.function, objs)
+
+generics &lt;- funs[sapply(funs, function(x) (&quot;generic&quot; %in% ftype(x)))]
+
+names(generics)[which.max(sapply(names(generics), function(x) length(methods(x))))]</code></pre>
+<pre><code>## [1] &quot;print&quot;</code></pre>
+<ol start="5" style="list-style-type: decimal">
+<li><code>UseMethod()</code> calls methods in a special way. Predict what the following code will return, then run it and read the help for <code>UseMethod()</code> to figure out what’s going on. Write down the rules in the simplest form possible.</li>
+</ol>
+<pre class="r"><code>y &lt;- 1
+g &lt;- function(x) {
+  y &lt;- 2
+  UseMethod(&quot;g&quot;)
+}
+g.numeric &lt;- function(x) y
+g(10)</code></pre>
+<pre><code>## [1] 2</code></pre>
+<pre class="r"><code>h &lt;- function(x) {
+  x &lt;- 10
+  UseMethod(&quot;h&quot;)
+}
+h.character &lt;- function(x) paste(&quot;char&quot;, x)
+h.numeric &lt;- function(x) paste(&quot;num&quot;, x)
+
+h(&quot;a&quot;)</code></pre>
+<pre><code>## [1] &quot;char a&quot;</code></pre>
+<p><code>g(10)</code> will return 2. Since y is not in the function, it will search in <code>g</code></p>
+<p><code>h(“a”)</code> will return “char a” because “a” is a character. <code>h.numeric()</code> will not be executed or further searched.</p>
+<ol start="6" style="list-style-type: decimal">
+<li>Internal generics don’t dispatch on the implicit class of base types. Carefully read <code>?“internal generic”</code> to determine why the length of f and g is different in the example below. What function helps distinguish between the behaviour of <code>f</code> and <code>g</code>?</li>
+</ol>
+<pre class="r"><code>f &lt;- function() 1
+g &lt;- function() 2
+class(g) &lt;- &quot;function&quot;
+
+class(f)</code></pre>
+<pre><code>## [1] &quot;function&quot;</code></pre>
+<pre class="r"><code>class(g)</code></pre>
+<pre><code>## [1] &quot;function&quot;</code></pre>
+<pre class="r"><code>length.function &lt;- function(x) &quot;function&quot;
+length(f)</code></pre>
+<pre><code>## [1] 1</code></pre>
+<pre class="r"><code>length(g)</code></pre>
+<pre><code>## [1] &quot;function&quot;</code></pre>
+<p><code>length(f)</code> will not search for <code>length.function</code> thus “function” will not be returned unlike <code>length(d)</code>. <code>f</code> does not have a class associated with it so internal generics don’t dispatch on the implicit class of base types.</p>
+</div>
+<div id="s4" class="section level3">
+<h3>S4</h3>
+<ol style="list-style-type: decimal">
+<li>Which S4 generic has the most methods defined for it? Which S4 class has the most methods associated with it?</li>
+</ol>
+<pre class="r"><code>generics&lt;- getGenerics(where = search())
+generics_s4 &lt;- generics@.Data[sapply(generics@.Data, function(x) isS4(get(x)))]
+
+generics_s4[which.max(sapply(generics_s4, function(x) length(methods(x))))]</code></pre>
+<pre><code>## [1] &quot;coerce&quot;</code></pre>
+<pre class="r"><code>s4class &lt;- getClasses(where = .GlobalEnv, inherits = TRUE)
+
+Methods &lt;- sapply(s4class, function(x) showMethods(classes = x, printTo = FALSE))
+
+names(Methods)[which.max(lapply(Methods, function(x) length(grep(&quot;Function&quot;, x))))]</code></pre>
+<pre><code>## [1] &quot;ANY&quot;</code></pre>
+<ol start="2" style="list-style-type: decimal">
+<li>What happens if you define a new S4 class that doesn’t “contain” an existing class? (Hint: read about virtual classes in <code>?setClass</code>.)</li>
+</ol>
+<blockquote>
+In the latter case, a virtual class may include slots to provide some common behavior without fully defining the object—see the class traceable for an example. Note that “VIRTUAL” does not carry over to subclasses; a class that contains a virtual class is not itself automatically virtual.
+</blockquote>
+<ol start="3" style="list-style-type: decimal">
+<li>What happens if you pass an S4 object to an S3 generic? What happens if you pass an S3 object to an S4 generic? (Hint: read <code>?setOldClass</code> for the second case.)</li>
+</ol>
+</div>
+<div id="rc" class="section level3">
+<h3>RC</h3>
+<ol style="list-style-type: decimal">
+<li>Use a field function to prevent the account balance from being directly manipulated. (Hint: create a “hidden” .balance field, and read the help for the fields argument in <code>setRefClass()</code>.)</li>
+</ol>
+<p>Not sure</p>
+<ol start="2" style="list-style-type: decimal">
+<li>I claimed that there aren’t any RC classes in base R, but that was a bit of a simplification. Use <code>getClasses()</code> and find which classes <code>extend()</code> from <code>envRefClass</code>. What are the classes used for? (Hint: recall how to look up the documentation for a class.)</li>
+</ol>
+<pre class="r"><code>classes &lt;- getClasses(where = .GlobalEnv, inherits = TRUE)
+
+classes[(sapply(classes, function(x) extends(x, &quot;envRefClass&quot;)))]</code></pre>
+<pre><code>## [1] &quot;envRefClass&quot;      &quot;refGeneratorSlot&quot; &quot;localRefClass&quot;</code></pre>
+</div>
+</div>
