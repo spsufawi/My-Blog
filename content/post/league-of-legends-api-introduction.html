@@ -1,0 +1,278 @@
+---
+title: League of Legends API Introduction
+author: Xinchen Pan
+date: '2018-06-16'
+slug: league-of-legends-api-introduction
+categories:
+  - Data Analysis
+tags:
+  - R
+  - LOL
+---
+
+
+
+<div class="section level2">
+<h2>前言</h2>
+<p>最近在逛统计之都时看到一个很有意思的帖子，<a href="https://cosx.org/2017/05/rdota2-seattle-prediction/" class="uri">https://cosx.org/2017/05/rdota2-seattle-prediction/</a>, 作者用了一个叫做RDota2 的 R package来抓取Dota2的比赛数据。我想既然Dota2有相关api，英雄联盟肯定也有吧，不然网上那么多查询召唤师信息的网站是用哪得数据，于是就搜索了一番。</p>
+<p><a href="https://developer.riotgames.com/" class="uri">https://developer.riotgames.com/</a> 这个网站有关于LOL API的全部信息。在读过它的documentation和在R里尝试抓一些数据后，两个想法出现在脑海里。第一个是想分析自己的排位赛数据，包括胜率，最常使用英雄，平均击杀数等。第二是想写一个LOL API client 的package。不确定是否都能完成，尤其是第二项。</p>
+<p>这篇文章主要目的是想熟悉LOL API的使用，以及了解它具体能返回什么哪些数据，算是为后面的分析以及写package做准备。</p>
+<p>注: League of Legends(下面简称为LOL)， 中文翻译英雄联盟。LOL是美国Riot Games开发的一款MOBA游戏，上线以来十分受欢迎，2016年9月Riot估计全世界每个月有超过1亿名活跃玩家(维基百科)</p>
+</div>
+<div id="api" class="section level2">
+<h2>注册API</h2>
+<p>要使用API必须先注册个英雄联盟账号，还是可以在这个链接https://developer.riotgames.com/ 注册。</p>
+<p>注册了之后在<a href="https://developer.riotgames.com/getting-started.html">Getting Started</a>里我们可以看到这么一行代码，</p>
+<pre>curl --request GET 'https://na1.api.riotgames.com/lol/summoner/v3/summoners/by-name/RiotSchmick?api_key=<key>' --include</pre>
+<p>&lt;key&gt;就是我们登录后自动生成的那串英文字母，每个key可以使用24小时。我们看看它会返回什么结果。</p>
+<div class="figure">
+<img src="/post/league-of-legends-api-introduction_files/pic1.png" />
+
+</div>
+<p>下面这串数据是上图的最后一行，也是真正有用的信息。</p>
+<pre class="r"><code>{&quot;id&quot;:585897,
+  &quot;accountId&quot;:31649572,
+  &quot;name&quot;:&quot;RiotSchmick&quot;,
+  &quot;profileIconId&quot;:746,
+  &quot;revisionDate&quot;:1529046826000,
+  &quot;summonerLevel&quot;:91}</code></pre>
+<p>它的解释可以在https://developer.riotgames.com/api-methods/#summoner-v3/GET_getBySummonerName 找到，如下图。</p>
+<div class="figure">
+<img src="/post/league-of-legends-api-introduction_files/pic2.png" />
+
+</div>
+<p>我们很容易能看出来这都是关于召唤师账户信息的数据。</p>
+<p>LOL的API还提供了许多其它数据可以让我们抓取</p>
+<div class="figure">
+<img src="/post/league-of-legends-api-introduction_files/pic3.png" />
+
+</div>
+<p>我们来看几个。</p>
+</div>
+<div id="champion-mastery-v3" class="section level2">
+<h2>1. CHAMPION-MASTERY-V3</h2>
+<div id="get-all-champion-mastery-entries-sorted-by-number-of-champion-points-descending" class="section level3">
+<h3>1.1 Get all champion mastery entries sorted by number of champion points descending</h3>
+<pre>/lol/champion-mastery/v3/champion-masteries/by-summoner/{summonerId}</pre>
+<p>Input: <code>summonerId</code> 就是上边的id,</p>
+<p>返回的是你所有的英雄的熟练度，英雄等级等信息。</p>
+<p>以下为我输入我的id之后返回的结果的一部分。这是我最熟练的一个英雄，英雄id是126，它并不是通过开箱子得到，英雄熟练度是187494分，还有一些其它信息。</p>
+<pre class="r"><code> &quot;championLevel&quot;: 7,
+        &quot;chestGranted&quot;: false,
+        &quot;championPoints&quot;: 187494,
+        &quot;championPointsSinceLastLevel&quot;: 165894,
+        &quot;playerId&quot;: 39938327,
+        &quot;championPointsUntilNextLevel&quot;: 0,
+        &quot;tokensEarned&quot;: 0,
+        &quot;championId&quot;: 126,
+        &quot;lastPlayTime&quot;: 1515867985000</code></pre>
+</div>
+<div id="get-a-champion-mastery-by-player-id-and-champion-id" class="section level3">
+<h3>1.2 Get a champion mastery by player ID and champion ID</h3>
+<pre>/lol/champion-mastery/v3/champion-masteries/by-summoner/{summonerId}/by-champion/{championId}</pre>
+<p>Input: <code>summonerId</code>, <code>championId</code></p>
+<p>上边是返回你所有的英雄的熟练度信息，这个是返回某个特定英雄。</p>
+</div>
+<div id="get-a-players-total-champion-mastery-score-which-is-the-sum-of-individual-champion-mastery-levels." class="section level3">
+<h3>1.3 Get a player’s total champion mastery score, which is the sum of individual champion mastery levels.</h3>
+<pre>/lol/champion-mastery/v3/scores/by-summoner/{summonerId}</pre>
+<p>这个请求返回的是你所有英雄熟练等级之和，如果你有120个英雄，每个英雄熟练度都是7级，那么返回的就是840。</p>
+</div>
+</div>
+<div id="champion-v3" class="section level2">
+<h2>2.CHAMPION-V3</h2>
+<div id="retrieve-all-champions" class="section level3">
+<h3>2.1 Retrieve all champions</h3>
+<pre>/lol/platform/v3/champions</pre>
+<p>这request不需要输入任何东西</p>
+<p>rankedPlayEnabled: 该英雄是否已在排位模式上线<br />
+botEnabled: 该英雄是否在自定义模式作为AI上线<br />
+botMmEnabled: 该英雄是否在人机模式作为AI上线<br />
+active: 该英雄是否已被激活<br />
+freeToPlay: 是否为该周周免英雄</p>
+<pre class="r"><code>&quot;rankedPlayEnabled&quot;: true,
+            &quot;botEnabled&quot;: false,
+            &quot;botMmEnabled&quot;: false,
+            &quot;active&quot;: true,
+            &quot;freeToPlay&quot;: false,
+            &quot;id&quot;: 266</code></pre>
+</div>
+<div id="retrieve-champion-by-id" class="section level3">
+<h3>2.2 Retrieve champion by ID</h3>
+<p>返回特定英雄</p>
+<pre>/lol/platform/v3/champions/{id}</pre>
+</div>
+</div>
+<div id="league-v3" class="section level2">
+<h2>3. LEAGUE-V3</h2>
+<div id="get-the-challenger-league-for-given-queue" class="section level3">
+<h3>3.1 Get the challenger league for given queue</h3>
+<p>返回最强王者段位所有召唤师信息</p>
+<p>Input: <code>RANKED_SOLO_5x5/RANKED_FLEX_SR/RANKED_FLEX_TT</code></p>
+<p>野龟哥的信息</p>
+<pre class="r"><code>   &quot;tier&quot;: &quot;CHALLENGER&quot;,
+    &quot;queue&quot;: &quot;RANKED_SOLO_5x5&quot;,
+    &quot;leagueId&quot;: &quot;930faadc-f191-3fc0-b715-79804ef73cfc&quot;,
+    &quot;name&quot;: &quot;Taric&#39;s Shadehunters&quot;,
+    &quot;entries&quot;: [
+        {
+            &quot;hotStreak&quot;: true,
+            &quot;wins&quot;: 172,
+            &quot;veteran&quot;: false,
+            &quot;losses&quot;: 129,
+            &quot;rank&quot;: &quot;I&quot;,
+            &quot;playerOrTeamName&quot;: &quot;sks Tmfprl&quot;,
+            &quot;inactive&quot;: false,
+            &quot;playerOrTeamId&quot;: &quot;83339118&quot;,
+            &quot;freshBlood&quot;: false,
+            &quot;leaguePoints&quot;: 568
+        },</code></pre>
+</div>
+<div id="get-league-with-given-id-including-inactive-entries" class="section level3">
+<h3>3.2 Get league with given ID, including inactive entries</h3>
+<p>每个英雄联盟玩家都会被分到一个分区里，每个分区都会有个独特的id，比如上面的<code>930faadc-f191-3fc0-b715-79804ef73cfc&gt;</code>, 通过这个id可以找到每个分区里所有的玩家信息。这个id需要通过特殊方法来找到，并没有可以直接返回的request命令。</p>
+</div>
+<div id="get-the-master-league-for-given-queue" class="section level3">
+<h3>3.3 Get the master league for given queue</h3>
+<p>返回超凡大师段位所有玩家信息</p>
+<pre>/lol/league/v3/masterleagues/by-queue/{queue}</pre>
+</div>
+<div id="get-league-positions-in-all-queues-for-a-given-summoner-id" class="section level3">
+<h3>3.4 Get league positions in all queues for a given summoner ID</h3>
+<p>寻找某个特定玩家的信息, 我是青铜王者3 0点。</p>
+<p>Input: <code>summonerId</code></p>
+<pre class="r"><code>[
+    {
+        &quot;queueType&quot;: &quot;RANKED_SOLO_5x5&quot;,
+        &quot;hotStreak&quot;: false,
+        &quot;wins&quot;: 12,
+        &quot;veteran&quot;: false,
+        &quot;losses&quot;: 19,
+        &quot;playerOrTeamId&quot;: &quot;39938327&quot;,
+        &quot;leagueName&quot;: &quot;Kennen&#39;s Outriders&quot;,
+        &quot;playerOrTeamName&quot;: &quot;spsufawi&quot;,
+        &quot;inactive&quot;: false,
+        &quot;rank&quot;: &quot;III&quot;,
+        &quot;freshBlood&quot;: false,
+        &quot;leagueId&quot;: &quot;dd4d6980-fc0a-11e7-b72a-c81f66dbb56c&quot;,
+        &quot;tier&quot;: &quot;BRONZE&quot;,
+        &quot;leaguePoints&quot;: 0
+    }
+]</code></pre>
+</div>
+</div>
+<div id="lol-static-data-v3" class="section level2">
+<h2>4. LOL-STATIC-DATA-V3</h2>
+<p>这一项返回的是游戏里的各种数据，比如符文，天赋，物品，英雄，具体的可以在</p>
+<p><a href="https://developer.riotgames.com/api-methods/#lol-static-data-v3" class="uri">https://developer.riotgames.com/api-methods/#lol-static-data-v3</a> 查询，在这里我列出前几项</p>
+<div id="retrieves-champion-list" class="section level3">
+<h3>4.1 Retrieves champion list</h3>
+<p>返回所有英雄信息，包括英雄名字，后边我们肯定会需要用id来找英雄名字。</p>
+<p>62号是猴子。</p>
+<pre class="r"><code>&quot;MonkeyKing&quot;: {
+        &quot;title&quot;: &quot;the Monkey King&quot;,
+        &quot;id&quot;: 62,
+        &quot;key&quot;: &quot;MonkeyKing&quot;,
+        &quot;name&quot;: &quot;Wukong&quot;
+    },</code></pre>
+</div>
+<div id="retrieves-champion-by-id" class="section level3">
+<h3>4.2 Retrieves champion by ID</h3>
+<pre>/lol/static-data/v3/champions/{id}</pre>
+<p>返回特定英雄信息</p>
+</div>
+<div id="retrieves-item-list" class="section level3">
+<h3>4.3 Retrieves item list</h3>
+<pre>/lol/static-data/v3/items</pre>
+<p>返回所有物品信息</p>
+<pre class="r"><code>&quot;1001&quot;: {
+            &quot;plaintext&quot;: &quot;Slightly increases Movement Speed&quot;,
+            &quot;description&quot;: &quot;&lt;groupLimit&gt;Limited to 1 pair of boots.&lt;/groupLimit&gt;&lt;br&gt;&lt;br&gt;&lt;unique&gt;UNIQUE Passive - Enhanced Movement:&lt;/unique&gt; +25 Movement Speed&quot;,
+            &quot;id&quot;: 1001,
+            &quot;name&quot;: &quot;Boots of Speed&quot;
+        },</code></pre>
+</div>
+</div>
+<div id="lol-status-v3" class="section level2">
+<h2>5. LOL-STATUS-V3</h2>
+<div id="get-league-of-legends-status-for-the-given-shard." class="section level3">
+<h3>5.1 Get League of Legends status for the given shard.</h3>
+<p>查询各个服务器的状态</p>
+<pre>/lol/status/v3/shard-data</pre>
+<p>这里我们需要修改的是前面的地址，如果想查询俄罗斯服务器，那么就把NA1换成ru.</p>
+</div>
+</div>
+<div id="match-v3" class="section level2">
+<h2>6. MATCH-V3</h2>
+<p>这是最重要的一部分，比赛信息</p>
+<div id="get-match-by-match-id" class="section level3">
+<h3>6.1 Get match by match ID</h3>
+<pre>/lol/match/v3/matches/{matchId}</pre>
+<p>每一场游戏都有一个独特的比赛id，通过这个id可以查询那场比赛的信息</p>
+</div>
+<div id="get-matchlist-for-games-played-on-given-account-id-and-platform-id" class="section level3">
+<h3>5.2 Get matchlist for games played on given account ID and platform ID</h3>
+<pre>/lol/match/v3/matchlists/by-account/{accountId}</pre>
+<p>我们通过上边的命令来获得所有的比赛id</p>
+<p>每次最多可以返回100场比赛的id, 这是其中一场排位赛</p>
+<pre class="r"><code>{
+    &quot;lane&quot;: &quot;MID&quot;,
+    &quot;gameId&quot;: 2689018141,
+    &quot;champion&quot;: 4,
+    &quot;platformId&quot;: &quot;NA1&quot;,
+    &quot;timestamp&quot;: 1515364930588,
+    &quot;queue&quot;: 420,
+    &quot;role&quot;: &quot;SOLO&quot;,
+    &quot;season&quot;: 10
+},</code></pre>
+</div>
+<div id="get-match-timeline-by-match-id" class="section level3">
+<h3>6.3 Get match timeline by match ID</h3>
+<p>返回比赛信息</p>
+<pre>/lol/match/v3/timelines/by-match/{matchId}</pre>
+<p>我用R抓取了其中一部分如下所示， 具体参见https://developer.riotgames.com/api-methods/#match-v3/GET_getMatchTimeline</p>
+<pre class="r"><code>&gt; games$participants
+   participantId teamId championId spell1Id spell2Id
+1              1    100        245        4       12
+2              2    100         32       11        4
+3              3    100        126        4       14
+4              4    100        117       14        3
+5              5    100         21        7        4
+6              6    200         12        4        3
+7              7    200         86        4       14
+8              8    200         77       11        4
+   highestAchievedSeasonTier stats.participantId
+1                     BRONZE                   1
+2                     SILVER                   2
+3                     SILVER                   3
+4                     BRONZE                   4
+5                   UNRANKED                   5
+6                     SILVER                   6
+7                     BRONZE                   7
+8                     SILVER                   8
+   stats.win stats.item0 stats.item1 stats.item2
+1       TRUE        3152        1056        3020
+2       TRUE        1401        2031        3047
+3       TRUE        3142        3077        3147
+4       TRUE        3117        3504        3069
+5       TRUE        1055        3142        2003
+6      FALSE        3401        2049        3009
+7      FALSE        1054        2031        3142
+8      FALSE        1416        2031        3057</code></pre>
+</div>
+</div>
+<div id="summoner-v3" class="section level2">
+<h2>7.SUMMONER-V3</h2>
+<p>如例子所示，返回账号信息，这个应该放在最前边。可以分别通过召唤师名字，accountId和summonerId查询</p>
+<div id="get-a-summoner-by-summoner-name" class="section level3">
+<h3>7.1 Get a summoner by summoner name</h3>
+<pre class="r"><code>{
+    &quot;profileIconId&quot;: 603,
+    &quot;name&quot;: &quot;spsufawi&quot;,
+    &quot;summonerLevel&quot;: 63,
+    &quot;accountId&quot;: 203047173,
+    &quot;id&quot;: 39938327,
+    &quot;revisionDate&quot;: 1527548543000
+}</code></pre>
+</div>
+</div>
