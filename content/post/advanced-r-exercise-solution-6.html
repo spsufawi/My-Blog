@@ -1,0 +1,208 @@
+---
+title: Advanced R Exercise Solution (6)
+author: Xinchen Pan
+date: '2018-06-26'
+slug: advanced-r-exercise-solution-6
+categories:
+  - R
+tags:
+  - R
+---
+
+
+
+<div id="functional-programming" class="section level2">
+<h2>Functional Programming</h2>
+<div id="anonymous-functions" class="section level3">
+<h3>Anonymous functions</h3>
+<ol style="list-style-type: decimal">
+<li>Given a function, like “mean”, <code>match.fun()</code> lets you find a function. Given a function, can you find its name? Why doesn’t that make sense in R?</li>
+</ol>
+<p>R doesn’t have a special syntax for creating a named function: when you create a function, you use the regular assignment operator to give it a name.</p>
+<ol start="2" style="list-style-type: decimal">
+<li>Use <code>lapply()</code> and an anonymous function to find the coefficient of variation (the standard deviation divided by the mean) for all columns in the mtcars dataset.</li>
+</ol>
+<pre class="r"><code>lapply(mtcars, function(x) sd(x) / mean(x))</code></pre>
+<pre><code>## $mpg
+## [1] 0.2999881
+## 
+## $cyl
+## [1] 0.2886338
+## 
+## $disp
+## [1] 0.5371779
+## 
+## $hp
+## [1] 0.4674077
+## 
+## $drat
+## [1] 0.1486638
+## 
+## $wt
+## [1] 0.3041285
+## 
+## $qsec
+## [1] 0.1001159
+## 
+## $vs
+## [1] 1.152037
+## 
+## $am
+## [1] 1.228285
+## 
+## $gear
+## [1] 0.2000825
+## 
+## $carb
+## [1] 0.5742933</code></pre>
+<ol start="3" style="list-style-type: decimal">
+<li>Use <code>integrate()</code> and an anonymous function to find the area under the curve for the following functions. Use Wolfram Alpha to check your answers.</li>
+</ol>
+<ol style="list-style-type: decimal">
+<li>y = x ^ 2 - x, x in [0, 10]</li>
+</ol>
+<pre class="r"><code>integrate(function(x) x**2 - x, 0, 10)</code></pre>
+<pre><code>## 283.3333 with absolute error &lt; 3.1e-12</code></pre>
+<ol start="2" style="list-style-type: decimal">
+<li>y = sin(x) + cos(x), x in [-??, ??]</li>
+</ol>
+<pre class="r"><code>integrate(function(x) sin(x) + cos(x), -pi, pi)</code></pre>
+<pre><code>## 2.615901e-16 with absolute error &lt; 6.3e-14</code></pre>
+<ol start="3" style="list-style-type: decimal">
+<li>y = exp(x) / x, x in [10, 20]</li>
+</ol>
+<pre class="r"><code>integrate(function(x) exp(x) / x, 10, 20)</code></pre>
+<pre><code>## 25613160 with absolute error &lt; 2.8e-07</code></pre>
+<ol start="4" style="list-style-type: decimal">
+<li>A good rule of thumb is that an anonymous function should fit on one line and shouldn’t need to use {}. Review your code. Where could you have used an anonymous function instead of a named function? Where should you have used a named function instead of an anonymous function?</li>
+</ol>
+</div>
+<div id="closures" class="section level3">
+<h3>Closures</h3>
+<ol style="list-style-type: decimal">
+<li>Why are functions created by other functions called closures?</li>
+</ol>
+<p>Closures get their name because they enclose the environment of the parent function and can access all its variables.</p>
+<ol start="2" style="list-style-type: decimal">
+<li>What does the following statistical function do? What would be a better name for it? (The existing name is a bit of a hint.)</li>
+</ol>
+<pre class="r"><code>bc &lt;- function(lambda) {
+  if (lambda == 0) {
+    function(x) log(x)
+  } else {
+    function(x) (x ^ lambda - 1) / lambda
+  }
+}</code></pre>
+<p>It does the Box-Cox transformation.</p>
+<ol start="3" style="list-style-type: decimal">
+<li>What does <code>approxfun()</code> do? What does it return?</li>
+</ol>
+<p>Return a list of points which linearly interpolate given data points, or a function performing the linear (or constant) interpolation.</p>
+<ol start="4" style="list-style-type: decimal">
+<li>What does <code>ecdf()</code> do? What does it return?</li>
+</ol>
+<p>Compute an empirical cumulative distribution function, with several methods for plotting, printing and computing with such an “ecdf” object.</p>
+<ol start="5" style="list-style-type: decimal">
+<li>Create a function that creates functions that compute the ith central moment of a numeric vector. You can test it by running the following code:</li>
+</ol>
+<pre class="r"><code>moment &lt;- function(k){
+  function(x)
+    mean((x - mean(x)) ** k)
+}
+m1 &lt;- moment(1)
+m2 &lt;- moment(2)
+x &lt;- runif(100)
+stopifnot(all.equal(m1(x), 0))
+stopifnot(all.equal(m2(x), var(x) * 99 / 100))</code></pre>
+<ol start="6" style="list-style-type: decimal">
+<li>Create a function <code>pick()</code> that takes an index, i, as an argument and returns a function with an argument x that subsets x with i.</li>
+</ol>
+<pre class="r"><code>pick &lt;- function(i) {
+  function(x) 
+    x[i]
+}
+
+all.equal(lapply(mtcars, pick(5)), lapply(mtcars, function(x) x[[5]]))</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+</div>
+</div>
+<div id="lists-of-functions" class="section level2">
+<h2>Lists of functions</h2>
+<ol style="list-style-type: decimal">
+<li>Implement a summary function that works like <code>base::summary()</code>, but uses a list of functions. Modify the function so it returns a closure, making it possible to use it as a function factory.</li>
+</ol>
+<pre class="r"><code>summary_simple &lt;- list(
+  Min = function(x) min(x),
+  First_Qu = function(x) quantile(x, names = FALSE)[2],
+  Median = function(x) median(x),
+  Mean = function(x) mean(x),
+  Third_Qu = function(x) quantile(x, names = FALSE)[4],
+  Max = function(x) max(x)
+)
+
+lapply(summary_simple, function(f) f(mtcars$mpg))</code></pre>
+<pre><code>## $Min
+## [1] 10.4
+## 
+## $First_Qu
+## [1] 15.425
+## 
+## $Median
+## [1] 19.2
+## 
+## $Mean
+## [1] 20.09062
+## 
+## $Third_Qu
+## [1] 22.8
+## 
+## $Max
+## [1] 33.9</code></pre>
+<ol start="2" style="list-style-type: decimal">
+<li>Which of the following commands is equivalent to <code>with(x, f(z))</code></li>
+</ol>
+<ol style="list-style-type: lower-alpha">
+<li>x<span class="math inline">\(f(x\)</span>z).</li>
+<li>f(x$z).</li>
+<li>x$f(z).</li>
+<li>f(z).</li>
+<li>It depends.</li>
+</ol>
+<p>Answer: b</p>
+<div id="case-study-numerical-integration" class="section level3">
+<h3>Case study: numerical integration</h3>
+<ol style="list-style-type: decimal">
+<li>Instead of creating individual functions (e.g., midpoint(), trapezoid(), simpson(), etc.), we could store them in a list. If we did that, how would that change the code? Can you create the list of functions from a list of coefficients for the Newton-Cotes formulae?</li>
+</ol>
+<pre class="r"><code>combo &lt;- function(f) {
+  list(
+    midpoint &lt;- function(a, b) {
+    (b - a) * f((a + b) / 2)
+  },
+  
+   trapezoid &lt;- function(a, b) {
+    (b - a) / 2 * (f(a) + f(b))
+   },
+   
+   simpson &lt;- function(a, b) {
+  (b - a) / 6 * (f(a) + 4 * f((a + b) / 2) + f(b))
+}
+)
+
+}
+
+kk &lt;- combo(sin)
+lapply(kk, function(f) f(0, pi))</code></pre>
+<pre><code>## [[1]]
+## [1] 3.141593
+## 
+## [[2]]
+## [1] 1.923607e-16
+## 
+## [[3]]
+## [1] 2.094395</code></pre>
+<ol start="2" style="list-style-type: decimal">
+<li>The trade-off between integration rules is that more complex rules are slower to compute, but need fewer pieces. For sin() in the range [0, π], determine the number of pieces needed so that each rule will be equally accurate. Illustrate your results with a graph. How do they change for different functions? sin(1 / x^2) is particularly challenging.</li>
+</ol>
+</div>
+</div>

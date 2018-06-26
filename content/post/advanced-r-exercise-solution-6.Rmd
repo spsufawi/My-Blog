@@ -1,0 +1,161 @@
+---
+title: Advanced R Exercise Solution (6)
+author: Xinchen Pan
+date: '2018-06-26'
+slug: advanced-r-exercise-solution-6
+categories:
+  - R
+tags:
+  - R
+---
+
+
+##Functional Programming
+
+###Anonymous functions
+
+1. Given a function, like "mean", <code>match.fun()</code> lets you find a function. Given a function, can you find its name? Why doesn't that make sense in R?
+
+R doesn't have a special syntax for creating a named function: when you create a function, you use the regular assignment operator to give it a name. 
+
+2. Use <code>lapply()</code> and an anonymous function to find the coefficient of variation (the standard deviation divided by the mean) for all columns in the mtcars dataset.
+
+```{r}
+lapply(mtcars, function(x) sd(x) / mean(x))
+```
+
+3. Use <code>integrate()</code> and an anonymous function to find the area under the curve for the following functions. Use Wolfram Alpha to check your answers.
+
+(1) y = x ^ 2 - x, x in [0, 10]
+
+```{r}
+integrate(function(x) x**2 - x, 0, 10)
+```
+
+(2) y = sin(x) + cos(x), x in [-??, ??]
+
+```{r}
+integrate(function(x) sin(x) + cos(x), -pi, pi)
+```
+
+(3) y = exp(x) / x, x in [10, 20]
+
+```{r}
+integrate(function(x) exp(x) / x, 10, 20)
+```
+
+4. A good rule of thumb is that an anonymous function should fit on one line and shouldn't need to use {}. Review your code. Where could you have used an anonymous function instead of a named function? Where should you have used a named function instead of an anonymous function?
+
+
+
+### Closures
+
+1. Why are functions created by other functions called closures?
+
+Closures get their name because they enclose the environment of the parent function and can access all its variables. 
+
+2. What does the following statistical function do? What would be a better name for it? (The existing name is a bit of a hint.)
+
+
+```{r}
+bc <- function(lambda) {
+  if (lambda == 0) {
+    function(x) log(x)
+  } else {
+    function(x) (x ^ lambda - 1) / lambda
+  }
+}
+```
+
+It does the Box-Cox transformation. 
+
+3. What does <code>approxfun()</code> do? What does it return?
+
+Return a list of points which linearly interpolate given data points, or a function performing the linear (or constant) interpolation.
+
+4. What does <code>ecdf()</code> do? What does it return?
+
+Compute an empirical cumulative distribution function, with several methods for plotting, printing and computing with such an "ecdf" object.
+
+5. Create a function that creates functions that compute the ith central moment of a numeric vector. You can test it by running the following code:
+
+
+```{r}
+moment <- function(k){
+  function(x)
+    mean((x - mean(x)) ** k)
+}
+m1 <- moment(1)
+m2 <- moment(2)
+x <- runif(100)
+stopifnot(all.equal(m1(x), 0))
+stopifnot(all.equal(m2(x), var(x) * 99 / 100))
+```
+
+
+6. Create a function <code>pick()</code> that takes an index, i, as an argument and returns a function with an argument x that subsets x with i.
+
+
+```{r}
+pick <- function(i) {
+  function(x) 
+    x[i]
+}
+
+all.equal(lapply(mtcars, pick(5)), lapply(mtcars, function(x) x[[5]]))
+```
+
+## Lists of functions
+
+1. Implement a summary function that works like <code>base::summary()</code>, but uses a list of functions. Modify the function so it returns a closure, making it possible to use it as a function factory.
+
+```{r}
+summary_simple <- list(
+  Min = function(x) min(x),
+  First_Qu = function(x) quantile(x, names = FALSE)[2],
+  Median = function(x) median(x),
+  Mean = function(x) mean(x),
+  Third_Qu = function(x) quantile(x, names = FALSE)[4],
+  Max = function(x) max(x)
+)
+
+lapply(summary_simple, function(f) f(mtcars$mpg))
+```
+
+2. Which of the following commands is equivalent to <code>with(x, f(z))</code>
+
+a. x$f(x$z).
+b. f(x$z).
+c. x$f(z).
+d. f(z).
+e. It depends.
+
+Answer: b
+
+### Case study: numerical integration
+
+1. Instead of creating individual functions (e.g., midpoint(), trapezoid(), simpson(), etc.), we could store them in a list. If we did that, how would that change the code? Can you create the list of functions from a list of coefficients for the Newton-Cotes formulae?
+
+```{r}
+combo <- function(f) {
+  list(
+    midpoint <- function(a, b) {
+    (b - a) * f((a + b) / 2)
+  },
+  
+   trapezoid <- function(a, b) {
+    (b - a) / 2 * (f(a) + f(b))
+   },
+   
+   simpson <- function(a, b) {
+  (b - a) / 6 * (f(a) + 4 * f((a + b) / 2) + f(b))
+}
+)
+
+}
+
+kk <- combo(sin)
+lapply(kk, function(f) f(0, pi))
+```
+
+2. The trade-off between integration rules is that more complex rules are slower to compute, but need fewer pieces. For sin() in the range [0, π], determine the number of pieces needed so that each rule will be equally accurate. Illustrate your results with a graph. How do they change for different functions? sin(1 / x^2) is particularly challenging.
