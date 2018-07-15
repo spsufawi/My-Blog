@@ -49,6 +49,7 @@ library(readxl)
 library(dplyr)
 library(data.table)
 library(ggplot2)
+library(ggrepel)
 ```
 
 为了能在R里使用中文，我们用下面的代码将系统locale设置为”Chs”.
@@ -356,7 +357,7 @@ wuhu_vs_wuzi <- function(attrs){
     geom_point(size = 2, aes(color = 稱呼)) + 
     geom_line(aes(color = 稱呼)) +
     scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, 10)) + 
-    geom_text(data = filter(general, 版本 == "三國志1"), 
+    geom_text_repel(data = filter(general, 版本 == "三國志1"), 
       aes(label = 姓名, hjust = 1, vjust = -1)) +
     ggtitle(paste0("五子良將和五虎大將歷代", attrs, "對比"))
 }

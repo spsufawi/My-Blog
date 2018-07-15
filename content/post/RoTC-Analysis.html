@@ -34,8 +34,12 @@ tags:
 <p>这些是我们需要用到的package.</p>
 <pre class="r"><code>library(readxl)
 library(dplyr)
-library(data.table)
-library(ggplot2)</code></pre>
+library(data.table)</code></pre>
+<pre><code>Warning: package &#39;data.table&#39; was built under R version 3.5.1</code></pre>
+<pre class="r"><code>library(ggplot2)</code></pre>
+<pre><code>Warning: package &#39;ggplot2&#39; was built under R version 3.5.1</code></pre>
+<pre class="r"><code>library(ggrepel)</code></pre>
+<pre><code>Warning: package &#39;ggrepel&#39; was built under R version 3.5.1</code></pre>
 <p>为了能在R里使用中文，我们用下面的代码将系统locale设置为”Chs”.</p>
 <pre class="r"><code>Sys.setlocale(&#39;LC_ALL&#39;,&#39;Chs&#39;)</code></pre>
 <p>接着用<code>readxl::read_excel</code>读取数据，每一个版本的数据分别存在了1个data frame里，我们总共有11个data frame，而这11个data frame又都再存在一个list里，因为<code>lapply</code>返回的就是list结构，我们给它命名为<code>dt</code>.</p>
@@ -52,12 +56,12 @@ series &lt;- lapply(1:11, function(x) {select(dt[[x]], -c(2:8)) %&gt;%
 <pre><code># A tibble: 6 x 7
   姓名    體力  武力  智力  魅力  運勢 版本   
   &lt;chr&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;  
-1 丁奉     81.   22.   81.   29.   47. 三國志1
-2 于禁     82.   72.   20.   25.   28. 三國志1
-3 公孫瓚   84.   70.   67.   89.   28. 三國志1
-4 太史慈   88.   97.   47.   84.   34. 三國志1
-5 孔融     84.   82.   61.   50.   77. 三國志1
-6 文聘     88.   84.   22.   64.   83. 三國志1</code></pre>
+1 丁奉      81    22    81    29    47 三國志1
+2 于禁      82    72    20    25    28 三國志1
+3 公孫瓚    84    70    67    89    28 三國志1
+4 太史慈    88    97    47    84    34 三國志1
+5 孔融      84    82    61    50    77 三國志1
+6 文聘      88    84    22    64    83 三國志1</code></pre>
 <p>前边说过，每一代游戏武将拥有的属性不一样，第一代有体力，第二代把统率分成了陆指和水指, 第九代没有魅力。那我们来看下所有作品都有属性是什么，以及每一代都有的属性。</p>
 <p>排除姓名和版本，历代都出现过的属性只有武力和智力，这两个属性也是我们后边会主要分析的。</p>
 <pre class="r"><code>common_attr &lt;- Reduce(intersect, sapply(series, colnames))
@@ -112,16 +116,16 @@ nrow(show_in_all)</code></pre>
 <pre><code># A tibble: 10 x 1
    姓名  
    &lt;chr&gt; 
- 1 許靖  
- 2 楊秋  
- 3 雷薄  
- 4 丁奉  
- 5 吳班  
- 6 馬休  
- 7 呂虔  
- 8 邢道榮
- 9 魯肅  
-10 宋憲  </code></pre>
+ 1 嚴顏  
+ 2 紀靈  
+ 3 郭圖  
+ 4 邢道榮
+ 5 雍闓  
+ 6 公孫瓚
+ 7 徐盛  
+ 8 馬鐵  
+ 9 馬玩  
+10 朱靈  </code></pre>
 <p>那有哪些角色出现在了第一部，却在后边某些版本没出现呢。</p>
 <pre class="r"><code>show_in_all &lt;- Reduce(intersect, lapply(series, &quot;[&quot;, 1))
 setdiff(filter(series_full, 版本 == &quot;三國志1&quot;)$姓名, show_in_all$姓名)</code></pre>
@@ -222,16 +226,16 @@ top_low_attr &lt;- function(attrs, bw = 1){
 <pre><code># A tibble: 10 x 3
    姓名    次數  均值
    &lt;chr&gt;  &lt;int&gt; &lt;dbl&gt;
- 1 呂布      11  100.
- 2 張飛      11   99.
- 3 關羽      11   98.
- 4 馬超      11   98.
- 5 許褚      11   97.
- 6 趙雲      10   98.
- 7 典韋       9   96.
- 8 黃忠       6   96.
- 9 文醜       6   96.
-10 太史慈     5   96.</code></pre>
+ 1 呂布      11   100
+ 2 張飛      11    99
+ 3 關羽      11    98
+ 4 馬超      11    98
+ 5 許褚      11    97
+ 6 趙雲      10    98
+ 7 典韋       9    96
+ 8 黃忠       6    96
+ 9 文醜       6    96
+10 太史慈     5    96</code></pre>
 </div>
 <div class="section level4">
 <h4>2.3.2 历代最高智力</h4>
@@ -240,16 +244,16 @@ top_low_attr &lt;- function(attrs, bw = 1){
 <pre><code># A tibble: 10 x 3
    姓名    次數  均值
    &lt;chr&gt;  &lt;int&gt; &lt;dbl&gt;
- 1 龐統      11   98.
- 2 司馬懿    11   98.
- 3 荀彧      11   97.
- 4 周瑜      11   97.
- 5 諸葛亮    10  100.
- 6 郭嘉      10   98.
- 7 陸遜      10   96.
- 8 賈詡       9   96.
- 9 徐庶       9   96.
-10 左慈       4   99.</code></pre>
+ 1 龐統      11    98
+ 2 司馬懿    11    98
+ 3 荀彧      11    97
+ 4 周瑜      11    97
+ 5 諸葛亮    10   100
+ 6 郭嘉      10    98
+ 7 陸遜      10    96
+ 8 賈詡       9    96
+ 9 徐庶       9    96
+10 左慈       4    99</code></pre>
 <p>那我们来看下是哪一代诸葛亮掉队了。原來是第七部，这部游戏的人物数值设计师看来是个诸葛亮黑，或者他把诸葛亮其他能力调高了？</p>
 <pre class="r"><code>series_full %&gt;% filter(姓名 == &quot;諸葛亮&quot;)  %&gt;%
   select(&quot;智力&quot;, &quot;版本&quot;)</code></pre>
@@ -288,16 +292,16 @@ top_low_attr &lt;- function(attrs, bw = 1){
 <pre><code># A tibble: 10 x 3
    姓名      次數  均值
    &lt;chr&gt;    &lt;int&gt; &lt;dbl&gt;
- 1 兀突骨       9    9.
- 2 俄何燒戈     7   13.
- 3 潘鳳         7   12.
- 4 忙牙長       7   10.
- 5 楊秋         5   16.
- 6 金環三結     5   15.
- 7 蔡和         5    9.
- 8 王雙         4   16.
- 9 曹豹         4   14.
-10 孟優         3   12.</code></pre>
+ 1 兀突骨       9     9
+ 2 俄何燒戈     7    13
+ 3 潘鳳         7    12
+ 4 忙牙長       7    10
+ 5 楊秋         5    16
+ 6 金環三結     5    15
+ 7 蔡和         5     9
+ 8 王雙         4    16
+ 9 曹豹         4    14
+10 孟優         3    12</code></pre>
 <p>其它人物没太多可说的。蔡和，被曹操喊去卧底，估计一身演技还没施展，就被周瑜识破了。 上将潘凤打不过华雄为啥智力那么低，何况也是韩馥让他去的，他的大斧饥渴难耐那是电视剧给他加的台词。都怪罗贯中。</p>
 <pre>
 “末将遵命！取兵器来！” 《央视版三国》
@@ -313,16 +317,16 @@ top_low_attr &lt;- function(attrs, bw = 1){
 <pre><code># A tibble: 10 x 3
    姓名    次數  均值
    &lt;chr&gt;  &lt;int&gt; &lt;dbl&gt;
- 1 黃皓       8   12.
- 2 岑昏       7   12.
- 3 韓玄       7   11.
- 4 忙牙長     5   16.
- 5 曹豹       5   15.
- 6 雷薄       5   15.
- 7 嚴政       5   13.
- 8 何晏       4   10.
- 9 楊松       4    8.
-10 糜芳       3   14.</code></pre>
+ 1 黃皓       8    12
+ 2 岑昏       7    12
+ 3 韓玄       7    11
+ 4 忙牙長     5    16
+ 5 曹豹       5    15
+ 6 雷薄       5    15
+ 7 嚴政       5    13
+ 8 何晏       4    10
+ 9 楊松       4     8
+10 糜芳       3    14</code></pre>
 </div>
 </div>
 <div class="section level3">
@@ -386,7 +390,7 @@ wuhu_vs_wuzi &lt;- function(attrs){
     geom_point(size = 2, aes(color = 稱呼)) + 
     geom_line(aes(color = 稱呼)) +
     scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, 10)) + 
-    geom_text(data = filter(general, 版本 == &quot;三國志1&quot;), 
+    geom_text_repel(data = filter(general, 版本 == &quot;三國志1&quot;), 
       aes(label = 姓名, hjust = 1, vjust = -1)) +
     ggtitle(paste0(&quot;五子良將和五虎大將歷代&quot;, attrs, &quot;對比&quot;))
 }</code></pre>
@@ -441,16 +445,16 @@ wuhu_vs_wuzi &lt;- function(attrs){
 <pre><code># A tibble: 10 x 2
    姓名  武力變化
    &lt;chr&gt;    &lt;dbl&gt;
- 1 孔融       77.
- 2 貂蟬       71.
- 3 鍾繇       68.
- 4 韓馥       66.
- 5 小喬       65.
- 6 大喬       63.
- 7 丁奉       62.
- 8 曹熊       61.
- 9 裴秀       60.
-10 劉繇       59.</code></pre>
+ 1 孔融        77
+ 2 貂蟬        71
+ 3 鍾繇        68
+ 4 韓馥        66
+ 5 小喬        65
+ 6 大喬        63
+ 7 丁奉        62
+ 8 曹熊        61
+ 9 裴秀        60
+10 劉繇        59</code></pre>
 又是一位建安七子，武力变化最大的是孔融让梨故事的主人公孔文举。孔融武力最高达到了82，最低却只有5。也许考虑到了孔融早期为十八路诸侯中的一路，参与了讨伐董卓。但无论是正史还是演义，记载的孔融打过的仗基本都是败的。后汉书有个很有意思的记载。
 <pre>
 《後漢書·卷七十》：「建安元年，為袁譚所攻，自春至夏，戰士所餘裁數百人，
@@ -480,17 +484,17 @@ wuhu_vs_wuzi &lt;- function(attrs){
 <pre><code># A tibble: 11 x 2
    姓名   智力變化
    &lt;chr&gt;     &lt;dbl&gt;
- 1 鮑信        67.
- 2 韓玄        66.
- 3 劉璋        65.
- 4 穆順        57.
- 5 橋玄        56.
- 6 曹訓        55.
- 7 全琮        54.
- 8 蔡中        53.
- 9 韓浩        53.
-10 審配        53.
-11 於夫羅      53.</code></pre>
+ 1 鮑信         67
+ 2 韓玄         66
+ 3 劉璋         65
+ 4 穆順         57
+ 5 橋玄         56
+ 6 曹訓         55
+ 7 全琮         54
+ 8 蔡中         53
+ 9 韓浩         53
+10 審配         53
+11 於夫羅       53</code></pre>
 韩玄智力变化非常大，在历史上韩玄其实和小说里的形象相差甚远，以下摘自维基百科。
 <pre>
 清代汪应铨《韩玄墓记》载；韩玄“威信智略，足以服人”，“宽厚爱人，玄与三郡俱降，兵不血刃，百姓安堵，可谓知顺逆之理，有安全之德。”对韩玄评价甚高，似在为其正名。
