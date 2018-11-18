@@ -29,8 +29,13 @@ tags: []
 
 希望自己能自省，变的更好，不要再自卑。
 
-<div style="width:350px; height:250px">
-![](/post/xunzhao_files/night.jpg)
-</div>
+
+
+
+```{r}
+library(knitr)
+include_graphics("C:/Users/natha/Documents/my-blog/static/post/xunzhao_files/night.jpg")
+```
+
 
 
