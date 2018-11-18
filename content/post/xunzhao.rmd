@@ -23,7 +23,7 @@ tags: []
 
 5. 和以往任何一次一样，只能靠自己走出来，别人很难给你帮助，但向人倾诉确实可以缓解一些。
 
-芝加哥的夜色很美，想在Willis ToWer 俯瞰这座城市。
+芝加哥的夜色很美，想在Willis Tower 俯瞰这座城市。
 
 遗憾。
 
@@ -31,11 +31,7 @@ tags: []
 
 
 
-
-```{r}
-library(knitr)
-include_graphics("C:/Users/natha/Documents/my-blog/static/post/xunzhao_files/night.jpg")
-```
+<img alt = 'my new screenshot' width='300' src='/post/xunzhao_files/night.jpg' />
 
 
 
