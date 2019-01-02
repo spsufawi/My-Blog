@@ -8,7 +8,7 @@ categories:
 tags: []
 ---
 
-最近在看Jordan Peterson的一个公开课的视频，里边有一段话对我很有启发，看了很多遍，它是这么说的
+最近在看Jordan Peterson的一个公开课的[视频](https://www.youtube.com/watch?v=kYYJlNbV1OM)，里边有一段话对我很有启发，看了很多遍，它是这么说的
 
 >You always learn when you are wrong which is very annoying.
 Now what do you learn when you are correct?
