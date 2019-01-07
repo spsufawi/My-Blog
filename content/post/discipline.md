@@ -57,4 +57,4 @@ Abide your consciece for 5 years.
 
 > No one can live without a routine. You cannot be mentally healthy without a routine, you need to pick a time to get up, whatever time you want,  Pick one a and stick to it, otherwise you dis-regulate your circadian rhythms and they regulate your mood. And eat something in the morning.
 
-
+保持一个好的生活规律。
